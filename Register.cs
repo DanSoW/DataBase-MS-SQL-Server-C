@@ -13,6 +13,8 @@ namespace DataBase
 {
 	public partial class Register : Form
 	{
+		public const int MAX_SIZE_DATA = 10;
+
 		private static Reader reader;
 		private static Book book;
 
@@ -328,8 +330,7 @@ namespace DataBase
 				return;
 			}
 
-			DataGridView dataReader = Reader.readDataFromDB(),
-					dataBook = Reader.readDataFromDB();
+			DataGridView dataBook = Book.readDataFromDB();
 
 			using (SqlConnection sqlConnection = new SqlConnection("Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=master;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False"))
 			{
@@ -343,26 +344,23 @@ namespace DataBase
 				{
 					string[] dateString = dataGridView1.Rows[i].Cells[2].Value.ToString().Split(new char[] { '.' });
 					DateTime date1 = new DateTime(int.Parse(dateString[2]), int.Parse(dateString[1]),
-								int.Parse(dateString[0])),
-						date2 = new DateTime(int.Parse(dateString[2]), int.Parse(dateString[1]),
 								int.Parse(dateString[0]));
-					bool flag = false;
-					for(int j = 0; j < dataBook.Rows.Count; j++)
+
+					dateString = dataGridView1.Rows[i].Cells[3].Value.ToString().Split(new char[] { '.' });
+					DateTime date2 = new DateTime(int.Parse(dateString[2]), int.Parse(dateString[1]),
+								int.Parse(dateString[0]));
+					bool flag = true;
+					if (dataBook.Rows[i].Cells[0].Value.ToString().Equals(dataGridView1.Rows[i].Cells[0].Value.ToString()))
 					{
-						if (dataBook.Rows[i].Cells[0].Value.ToString().Equals(dataGridView1.Rows[i].Cells[0].Value.ToString()))
+						int yearPublish = int.Parse(dataBook.Rows[i].Cells[2].Value.ToString());
+
+						if (date1.Year < yearPublish)
 						{
-							string[] dstr = dataBook.Rows[i].Cells[0].Value.ToString().Split(new char[] { '.' });
-							DateTime date3 = new DateTime(int.Parse(dstr[2]), int.Parse(dstr[1]), int.Parse(dstr[0]));
-							if (DateTime.Compare(date3, date1) > 0)
-							{
-								flag = false;
-								MessageBox.Show("Ошибка: не возможно добавить запись с регистрационным номером "
-								+ dataGridView1.Rows[i].Cells[0].Value.ToString() + " и с паспортными данными "
-								+ dataGridView1.Rows[i].Cells[1].Value.ToString() + " , так как" +
-								" дата выдачи книги не может быть позже даты её возврата ", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
-							}
-							else
-								flag = true;
+							flag = false;
+							MessageBox.Show("Ошибка: не возможно добавить запись с регистрационным номером "
+							+ dataGridView1.Rows[i].Cells[0].Value.ToString() + " и с паспортными данными "
+							+ dataGridView1.Rows[i].Cells[1].Value.ToString() + " , так как" +
+							" дата выдачи книги не может быть позже даты её выдачи ", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
 						}
 					}
 
@@ -433,6 +431,8 @@ namespace DataBase
 
 			if (!Char.IsDigit(number) && (number != '.') && (number != 8))
 				e.Handled = true;
+			if ((number != 8) && (_txtDataIssue.Text + number).Length > MAX_SIZE_DATA)
+				e.Handled = true;
 		}
 
 		private void _txtDataReturn_KeyPress(object sender, KeyPressEventArgs e)
@@ -446,6 +446,8 @@ namespace DataBase
 			char number = e.KeyChar;
 
 			if (!Char.IsDigit(number) && (number != '.') && (number != 8))
+				e.Handled = true;
+			if ((number != 8) && (_txtDataReturn.Text + number).Length > MAX_SIZE_DATA)
 				e.Handled = true;
 		}
 
@@ -508,6 +510,102 @@ namespace DataBase
 
 			if (!Char.IsDigit(number) && (number != 8))
 				e.Handled = true;
+		}
+
+		private int numberBorrowedBooks(string passwordNumber)
+		{
+			DataGridView data = readDataFromDB();
+			if ((data.Rows.Count - 1) <= 0)
+			{
+				throw new Exception("Ошибка: в базе данных нет записей!");
+			}
+
+			int count = 0;
+			for(int i = 0; i < (data.Rows.Count-1); i++)
+			{
+				if (data.Rows[i].Cells[1].Value.ToString().Equals(passwordNumber))
+					count++;
+			}
+
+			return count;
+		}
+
+		private void button1_Click(object sender, EventArgs e)
+		{
+			if(textBox1.Text.Length == 0)
+			{
+				MessageBox.Show("Ошибка: не введено число месяц(-а/-ев)!", "Ошибка!",
+					   MessageBoxButtons.OK, MessageBoxIcon.Error);
+				return;
+			}
+
+			DataGridView data = readDataFromDB(),
+				readers = Reader.readDataFromDB();
+			if ((data.Rows.Count - 1) <= 0)
+			{
+				MessageBox.Show("Ошибка: в базе данных нет записей!", "Ошибка!",
+					   MessageBoxButtons.OK, MessageBoxIcon.Error);
+				return;
+			}
+
+			dataGridView2.Rows.Clear();
+
+			for (int i = 0; i < (data.Rows.Count-1); i++)
+			{
+				String dataIssue = data.Rows[i].Cells[2].Value.ToString(),
+					dataReturn = data.Rows[i].Cells[3].Value.ToString();
+
+				if ((int.Parse(dataReturn.Split(new char[] { '.' })[1]) - int.Parse(dataIssue.Split(new char[] { '.' })[1]))
+					> int.Parse(textBox1.Text))
+				{
+					for(int j = 0; j < (readers.Rows.Count-1); j++)
+					{
+						if(readers.Rows[j].Cells[0].Value.ToString().Equals(
+							data.Rows[i].Cells[0].Value.ToString()))
+						{
+							dataGridView2.Rows.Add(
+								readers.Rows[j].Cells[readers.Rows[j].Cells.Count - 1].Value.ToString(),
+								readers.Rows[j].Cells[0].Value.ToString(),
+								data.Rows[i].Cells[0].Value.ToString(),
+								dataIssue,
+								dataReturn,
+								numberBorrowedBooks(readers.Rows[j].Cells[0].Value.ToString()).ToString()
+								);
+						}
+					}
+				}
+				else
+				{
+					int year = (int.Parse(dataReturn.Split(new char[] { '.' })[2]) - int.Parse(dataIssue.Split(new char[] { '.' })[2]));
+					int month = int.Parse(textBox1.Text);
+					int yearsBook = 0;
+					while (month >= 12)
+					{
+						month -= 12;
+						yearsBook++;
+					}
+
+					if(year > yearsBook)
+					{
+						for (int j = 0; j < (readers.Rows.Count - 1); j++)
+						{
+							if (readers.Rows[j].Cells[0].Value.ToString().Equals(
+								data.Rows[i].Cells[0].Value.ToString()))
+							{
+								dataGridView2.Rows.Add(
+									readers.Rows[j].Cells[readers.Rows[j].Cells.Count - 1].Value.ToString(),
+									readers.Rows[j].Cells[0].Value.ToString(),
+									data.Rows[i].Cells[0].Value.ToString(),
+									dataIssue,
+									dataReturn,
+									numberBorrowedBooks(readers.Rows[j].Cells[0].Value.ToString()).ToString()
+									);
+							}
+						}
+					}
+				}
+			}
+
 		}
 	}
 }

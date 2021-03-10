@@ -75,21 +75,21 @@ namespace DataBase
             this.bookToolStripMenuItem});
 			this.menuStrip1.Location = new System.Drawing.Point(0, 0);
 			this.menuStrip1.Name = "menuStrip1";
-			this.menuStrip1.Size = new System.Drawing.Size(1265, 30);
+			this.menuStrip1.Size = new System.Drawing.Size(1265, 28);
 			this.menuStrip1.TabIndex = 0;
 			this.menuStrip1.Text = "menuStrip1";
 			// 
 			// readerToolStripMenuItem
 			// 
 			this.readerToolStripMenuItem.Name = "readerToolStripMenuItem";
-			this.readerToolStripMenuItem.Size = new System.Drawing.Size(70, 26);
+			this.readerToolStripMenuItem.Size = new System.Drawing.Size(70, 24);
 			this.readerToolStripMenuItem.Text = "Reader";
 			this.readerToolStripMenuItem.Click += new System.EventHandler(this.readerToolStripMenuItem_Click);
 			// 
 			// bookToolStripMenuItem
 			// 
 			this.bookToolStripMenuItem.Name = "bookToolStripMenuItem";
-			this.bookToolStripMenuItem.Size = new System.Drawing.Size(57, 26);
+			this.bookToolStripMenuItem.Size = new System.Drawing.Size(57, 24);
 			this.bookToolStripMenuItem.Text = "Book";
 			this.bookToolStripMenuItem.Click += new System.EventHandler(this.bookToolStripMenuItem_Click);
 			// 
@@ -346,7 +346,7 @@ namespace DataBase
 			// 
 			this.label5.AutoSize = true;
 			this.label5.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
-			this.label5.Location = new System.Drawing.Point(17, 464);
+			this.label5.Location = new System.Drawing.Point(16, 464);
 			this.label5.Name = "label5";
 			this.label5.Size = new System.Drawing.Size(425, 20);
 			this.label5.TabIndex = 36;
@@ -355,17 +355,18 @@ namespace DataBase
 			// textBox1
 			// 
 			this.textBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
-			this.textBox1.Location = new System.Drawing.Point(449, 464);
+			this.textBox1.Location = new System.Drawing.Point(447, 461);
 			this.textBox1.Name = "textBox1";
 			this.textBox1.Size = new System.Drawing.Size(34, 26);
 			this.textBox1.TabIndex = 37;
+			this.textBox1.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
 			this.textBox1.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.textBox1_KeyPress);
 			// 
 			// label6
 			// 
 			this.label6.AutoSize = true;
 			this.label6.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
-			this.label6.Location = new System.Drawing.Point(489, 464);
+			this.label6.Location = new System.Drawing.Point(487, 464);
 			this.label6.Name = "label6";
 			this.label6.Size = new System.Drawing.Size(119, 20);
 			this.label6.TabIndex = 38;
@@ -374,12 +375,13 @@ namespace DataBase
 			// button1
 			// 
 			this.button1.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
-			this.button1.Location = new System.Drawing.Point(614, 453);
+			this.button1.Location = new System.Drawing.Point(612, 453);
 			this.button1.Name = "button1";
 			this.button1.Size = new System.Drawing.Size(177, 42);
 			this.button1.TabIndex = 39;
 			this.button1.Text = "Сформировать";
 			this.button1.UseVisualStyleBackColor = true;
+			this.button1.Click += new System.EventHandler(this.button1_Click);
 			// 
 			// Register
 			// 
