@@ -350,17 +350,20 @@ namespace DataBase
 					DateTime date2 = new DateTime(int.Parse(dateString[2]), int.Parse(dateString[1]),
 								int.Parse(dateString[0]));
 					bool flag = true;
-					if (dataBook.Rows[i].Cells[0].Value.ToString().Equals(dataGridView1.Rows[i].Cells[0].Value.ToString()))
+					for(int j = 0; j < (dataBook.Rows.Count - 1); j++)
 					{
-						int yearPublish = int.Parse(dataBook.Rows[i].Cells[2].Value.ToString());
-
-						if (date1.Year < yearPublish)
+						if (dataBook.Rows[j].Cells[0].Value.ToString().Equals(dataGridView1.Rows[i].Cells[0].Value.ToString()))
 						{
-							flag = false;
-							MessageBox.Show("Ошибка: не возможно добавить запись с регистрационным номером "
-							+ dataGridView1.Rows[i].Cells[0].Value.ToString() + " и с паспортными данными "
-							+ dataGridView1.Rows[i].Cells[1].Value.ToString() + " , так как" +
-							" дата выдачи книги не может быть позже даты её выдачи ", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+							int yearPublish = int.Parse(dataBook.Rows[j].Cells[2].Value.ToString());
+
+							if (date1.Year < yearPublish)
+							{
+								flag = false;
+								MessageBox.Show("Ошибка: не возможно добавить запись с регистрационным номером "
+								+ dataGridView1.Rows[i].Cells[0].Value.ToString() + " и с паспортными данными "
+								+ dataGridView1.Rows[i].Cells[1].Value.ToString() + " , так как" +
+								" дата выдачи книги не может быть позже даты её выдачи ", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+							}
 						}
 					}
 
@@ -552,13 +555,34 @@ namespace DataBase
 
 			for (int i = 0; i < (data.Rows.Count-1); i++)
 			{
+				int index = (-1);
+				for(int j = 0; (index < 0) && (j < (readers.Rows.Count - 1)); j++)
+				{
+					if(readers.Rows[j].Cells[0].Value.ToString().Equals(
+						data.Rows[i].Cells[1].Value.ToString()))
+					{
+						index = j;
+					}
+				}
+
+				if (index < 0)
+					continue;
+
 				String dataIssue = data.Rows[i].Cells[2].Value.ToString(),
 					dataReturn = data.Rows[i].Cells[3].Value.ToString();
 
 				if ((int.Parse(dataReturn.Split(new char[] { '.' })[1]) - int.Parse(dataIssue.Split(new char[] { '.' })[1]))
 					> int.Parse(textBox1.Text))
 				{
-					for(int j = 0; j < (readers.Rows.Count-1); j++)
+					dataGridView2.Rows.Add(
+								readers.Rows[index].Cells[readers.Rows[index].Cells.Count - 1].Value.ToString(),
+								readers.Rows[index].Cells[0].Value.ToString(),
+								data.Rows[i].Cells[0].Value.ToString(),
+								dataIssue,
+								dataReturn,
+								numberBorrowedBooks(readers.Rows[index].Cells[0].Value.ToString()).ToString()
+								);
+					/*for(int j = 0; j < (readers.Rows.Count-1); j++)
 					{
 						if(readers.Rows[j].Cells[0].Value.ToString().Equals(
 							data.Rows[i].Cells[0].Value.ToString()))
@@ -572,7 +596,7 @@ namespace DataBase
 								numberBorrowedBooks(readers.Rows[j].Cells[0].Value.ToString()).ToString()
 								);
 						}
-					}
+					}*/
 				}
 				else
 				{
@@ -587,7 +611,15 @@ namespace DataBase
 
 					if(year > yearsBook)
 					{
-						for (int j = 0; j < (readers.Rows.Count - 1); j++)
+						dataGridView2.Rows.Add(
+								readers.Rows[index].Cells[readers.Rows[index].Cells.Count - 1].Value.ToString(),
+								readers.Rows[index].Cells[0].Value.ToString(),
+								data.Rows[i].Cells[0].Value.ToString(),
+								dataIssue,
+								dataReturn,
+								numberBorrowedBooks(readers.Rows[index].Cells[0].Value.ToString()).ToString()
+								);
+						/*for (int j = 0; j < (readers.Rows.Count - 1); j++)
 						{
 							if (readers.Rows[j].Cells[0].Value.ToString().Equals(
 								data.Rows[i].Cells[0].Value.ToString()))
@@ -601,7 +633,7 @@ namespace DataBase
 									numberBorrowedBooks(readers.Rows[j].Cells[0].Value.ToString()).ToString()
 									);
 							}
-						}
+						}*/
 					}
 				}
 			}
