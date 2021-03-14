@@ -503,12 +503,6 @@ namespace DataBase
 
 		private void textBox1_KeyPress(object sender, KeyPressEventArgs e)
 		{
-			if (_view)
-			{
-				e.Handled = true;
-				return;
-			}
-
 			char number = e.KeyChar;
 
 			if (!Char.IsDigit(number) && (number != 8))
@@ -638,6 +632,103 @@ namespace DataBase
 				}
 			}
 
+		}
+
+		private void _txtInputE2_KeyPress(object sender, KeyPressEventArgs e)
+		{
+			char number = e.KeyChar;
+
+			if (!Char.IsDigit(number) && (number != 8))
+				e.Handled = true;
+			if ((number != 8) && (_txtInputE2.Text + number).Length > Reader.MAX_SIZE_PSWD)
+				e.Handled = true;
+		}
+
+		private void _btnExecute2_Click(object sender, EventArgs e)
+		{
+			if(_txtInputE2.Text.Length != Reader.MAX_SIZE_PSWD)
+			{
+				MessageBox.Show("Ошибка: не введены паспортные данные!", "Ошибка!",
+					   MessageBoxButtons.OK, MessageBoxIcon.Error);
+				return;
+			}
+			richTextBox1.Clear();
+
+			DataGridView infoData = readDataFromDB(),
+				books = Book.readDataFromDB();
+			List<DataElement> elements = new List<DataElement>();
+
+			int infoIndex = 0;
+			while (infoIndex >= 0)
+			{
+				infoIndex = (-1);
+				for (int i = 0; (infoIndex < 0) && (i < (infoData.Rows.Count - 1)); i++)
+				{
+					if (infoData.Rows[i].Cells[1].Value.ToString().Equals(_txtInputE2.Text))
+					{
+						infoIndex = i;
+					}
+				}
+
+				for (int j = 0; (j < (books.Rows.Count - 1)) && (infoIndex >= 0); j++)
+					{
+					if (books.Rows[j].Cells[0].Value.ToString().Equals(
+						infoData.Rows[infoIndex].Cells[0].Value.ToString()))
+					{
+						elements.Add(new DataElement(
+						books.Rows[j].Cells[0].Value.ToString(),
+						infoData.Rows[infoIndex].Cells[2].Value.ToString(),
+						int.Parse(books.Rows[j].Cells[1].Value.ToString()),
+						books.Rows[j].Cells[(books.Rows[j].Cells.Count - 1)].Value.ToString()));
+					}
+				}
+
+				if (infoIndex >= 0)
+				{
+					infoData.Rows.RemoveAt(infoIndex);
+				}
+			}
+
+			elements.Sort(new Comparison<DataElement>(compare));
+			for(int i = 0; i < elements.Count; i++)
+			{
+				richTextBox1.Text = richTextBox1.Text + elements[i].ToString() + "\n";
+			}
+		}
+
+		int compare(DataElement o1, DataElement o2)
+		{
+			string[] dateString = o1.dataIssue.Split(new char[] { '.' });
+			DateTime date1 = new DateTime(int.Parse(dateString[2]), int.Parse(dateString[1]),
+				int.Parse(dateString[0]));
+
+			dateString = o2.dataIssue.Split(new char[] { '.' });
+			DateTime date2 = new DateTime(int.Parse(dateString[2]), int.Parse(dateString[1]),
+				int.Parse(dateString[0]));
+
+			return date1.CompareTo(date2);
+		}
+	}
+
+	struct DataElement
+	{
+		public string register;
+		public string dataIssue;
+		public int pages;
+		public string section;
+
+		public DataElement(string reg, string data, int pages, string section)
+		{
+			this.register = reg;
+			this.dataIssue = data;
+			this.pages = pages;
+			this.section = section;
+		}
+
+		public override string ToString()
+		{
+			return register + ", " + dataIssue + ", " + pages.ToString()
+				+ ", " + section;
 		}
 	}
 }

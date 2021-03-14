@@ -62,6 +62,10 @@ namespace DataBase
 			this.textBox1 = new System.Windows.Forms.TextBox();
 			this.label6 = new System.Windows.Forms.Label();
 			this.button1 = new System.Windows.Forms.Button();
+			this.label7 = new System.Windows.Forms.Label();
+			this._txtInputE2 = new System.Windows.Forms.TextBox();
+			this._btnExecute2 = new System.Windows.Forms.Button();
+			this.richTextBox1 = new System.Windows.Forms.RichTextBox();
 			this.menuStrip1.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.dataGridView2)).BeginInit();
@@ -75,7 +79,7 @@ namespace DataBase
             this.bookToolStripMenuItem});
 			this.menuStrip1.Location = new System.Drawing.Point(0, 0);
 			this.menuStrip1.Name = "menuStrip1";
-			this.menuStrip1.Size = new System.Drawing.Size(1265, 28);
+			this.menuStrip1.Size = new System.Drawing.Size(1501, 28);
 			this.menuStrip1.TabIndex = 0;
 			this.menuStrip1.Text = "menuStrip1";
 			// 
@@ -355,7 +359,7 @@ namespace DataBase
 			// textBox1
 			// 
 			this.textBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
-			this.textBox1.Location = new System.Drawing.Point(447, 461);
+			this.textBox1.Location = new System.Drawing.Point(457, 461);
 			this.textBox1.Name = "textBox1";
 			this.textBox1.Size = new System.Drawing.Size(34, 26);
 			this.textBox1.TabIndex = 37;
@@ -366,7 +370,7 @@ namespace DataBase
 			// 
 			this.label6.AutoSize = true;
 			this.label6.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
-			this.label6.Location = new System.Drawing.Point(487, 464);
+			this.label6.Location = new System.Drawing.Point(497, 464);
 			this.label6.Name = "label6";
 			this.label6.Size = new System.Drawing.Size(119, 20);
 			this.label6.TabIndex = 38;
@@ -375,7 +379,7 @@ namespace DataBase
 			// button1
 			// 
 			this.button1.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
-			this.button1.Location = new System.Drawing.Point(612, 453);
+			this.button1.Location = new System.Drawing.Point(622, 453);
 			this.button1.Name = "button1";
 			this.button1.Size = new System.Drawing.Size(177, 42);
 			this.button1.TabIndex = 39;
@@ -383,11 +387,53 @@ namespace DataBase
 			this.button1.UseVisualStyleBackColor = true;
 			this.button1.Click += new System.EventHandler(this.button1_Click);
 			// 
+			// label7
+			// 
+			this.label7.AutoSize = true;
+			this.label7.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
+			this.label7.Location = new System.Drawing.Point(959, 506);
+			this.label7.Name = "label7";
+			this.label7.Size = new System.Drawing.Size(322, 20);
+			this.label7.TabIndex = 40;
+			this.label7.Text = "Для читателя (Паспортные данные):";
+			// 
+			// _txtInputE2
+			// 
+			this._txtInputE2.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
+			this._txtInputE2.Location = new System.Drawing.Point(1300, 503);
+			this._txtInputE2.Name = "_txtInputE2";
+			this._txtInputE2.Size = new System.Drawing.Size(201, 26);
+			this._txtInputE2.TabIndex = 41;
+			this._txtInputE2.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this._txtInputE2_KeyPress);
+			// 
+			// _btnExecute2
+			// 
+			this._btnExecute2.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
+			this._btnExecute2.Location = new System.Drawing.Point(963, 543);
+			this._btnExecute2.Name = "_btnExecute2";
+			this._btnExecute2.Size = new System.Drawing.Size(308, 41);
+			this._btnExecute2.TabIndex = 42;
+			this._btnExecute2.Text = "Сформировать список книг";
+			this._btnExecute2.UseVisualStyleBackColor = true;
+			this._btnExecute2.Click += new System.EventHandler(this._btnExecute2_Click);
+			// 
+			// richTextBox1
+			// 
+			this.richTextBox1.Location = new System.Drawing.Point(963, 606);
+			this.richTextBox1.Name = "richTextBox1";
+			this.richTextBox1.Size = new System.Drawing.Size(525, 176);
+			this.richTextBox1.TabIndex = 43;
+			this.richTextBox1.Text = "";
+			// 
 			// Register
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(1265, 927);
+			this.ClientSize = new System.Drawing.Size(1501, 847);
+			this.Controls.Add(this.richTextBox1);
+			this.Controls.Add(this._btnExecute2);
+			this.Controls.Add(this._txtInputE2);
+			this.Controls.Add(this.label7);
 			this.Controls.Add(this.button1);
 			this.Controls.Add(this.label6);
 			this.Controls.Add(this.textBox1);
@@ -456,5 +502,9 @@ namespace DataBase
 		private System.Windows.Forms.TextBox textBox1;
 		private System.Windows.Forms.Label label6;
 		private System.Windows.Forms.Button button1;
+		private System.Windows.Forms.Label label7;
+		private System.Windows.Forms.TextBox _txtInputE2;
+		private System.Windows.Forms.Button _btnExecute2;
+		private System.Windows.Forms.RichTextBox richTextBox1;
 	}
 }
