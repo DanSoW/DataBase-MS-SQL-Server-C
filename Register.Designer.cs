@@ -33,6 +33,10 @@ namespace DataBase
 			this.readerToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.bookToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.dataGridView1 = new System.Windows.Forms.DataGridView();
+			this.Column1 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+			this.Column2 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+			this.Column3 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+			this.Column4 = new System.Windows.Forms.DataGridViewTextBoxColumn();
 			this._txtDataReturn = new System.Windows.Forms.TextBox();
 			this.label4 = new System.Windows.Forms.Label();
 			this._btnDelete = new System.Windows.Forms.Button();
@@ -58,10 +62,10 @@ namespace DataBase
 			this._txtInputE2 = new System.Windows.Forms.TextBox();
 			this._btnExecute2 = new System.Windows.Forms.Button();
 			this.richTextBox1 = new System.Windows.Forms.RichTextBox();
-			this.Column1 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-			this.Column2 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-			this.Column3 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-			this.Column4 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+			this._btnSaveExcel = new System.Windows.Forms.Button();
+			this._btnReadExcel = new System.Windows.Forms.Button();
+			this.saveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
+			this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
 			this.menuStrip1.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.dataGridView2)).BeginInit();
@@ -75,7 +79,7 @@ namespace DataBase
             this.bookToolStripMenuItem});
 			this.menuStrip1.Location = new System.Drawing.Point(0, 0);
 			this.menuStrip1.Name = "menuStrip1";
-			this.menuStrip1.Size = new System.Drawing.Size(1501, 30);
+			this.menuStrip1.Size = new System.Drawing.Size(1501, 28);
 			this.menuStrip1.TabIndex = 0;
 			this.menuStrip1.Text = "menuStrip1";
 			// 
@@ -109,6 +113,40 @@ namespace DataBase
 			this.dataGridView1.Size = new System.Drawing.Size(734, 292);
 			this.dataGridView1.TabIndex = 1;
 			this.dataGridView1.RowPrePaint += new System.Windows.Forms.DataGridViewRowPrePaintEventHandler(this.dbPrePaint);
+			// 
+			// Column1
+			// 
+			this.Column1.HeaderText = "Регистрационный номер";
+			this.Column1.MinimumWidth = 6;
+			this.Column1.Name = "Column1";
+			this.Column1.ReadOnly = true;
+			this.Column1.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
+			this.Column1.Width = 125;
+			// 
+			// Column2
+			// 
+			this.Column2.HeaderText = "Паспортные данные";
+			this.Column2.MinimumWidth = 6;
+			this.Column2.Name = "Column2";
+			this.Column2.ReadOnly = true;
+			this.Column2.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
+			this.Column2.Width = 125;
+			// 
+			// Column3
+			// 
+			this.Column3.HeaderText = "Дата выдачи";
+			this.Column3.MinimumWidth = 6;
+			this.Column3.Name = "Column3";
+			this.Column3.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
+			this.Column3.Width = 125;
+			// 
+			// Column4
+			// 
+			this.Column4.HeaderText = "Дата возврата";
+			this.Column4.MinimumWidth = 6;
+			this.Column4.Name = "Column4";
+			this.Column4.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
+			this.Column4.Width = 125;
 			// 
 			// _txtDataReturn
 			// 
@@ -358,45 +396,39 @@ namespace DataBase
 			this.richTextBox1.TabIndex = 43;
 			this.richTextBox1.Text = "";
 			// 
-			// Column1
+			// _btnSaveExcel
 			// 
-			this.Column1.HeaderText = "Регистрационный номер";
-			this.Column1.MinimumWidth = 6;
-			this.Column1.Name = "Column1";
-			this.Column1.ReadOnly = true;
-			this.Column1.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
-			this.Column1.Width = 125;
+			this._btnSaveExcel.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
+			this._btnSaveExcel.Location = new System.Drawing.Point(17, 743);
+			this._btnSaveExcel.Name = "_btnSaveExcel";
+			this._btnSaveExcel.Size = new System.Drawing.Size(393, 46);
+			this._btnSaveExcel.TabIndex = 44;
+			this._btnSaveExcel.Text = "Сохранение в таблицу Excel";
+			this._btnSaveExcel.UseVisualStyleBackColor = true;
+			this._btnSaveExcel.Click += new System.EventHandler(this._btnSaveExcel_Click);
 			// 
-			// Column2
+			// _btnReadExcel
 			// 
-			this.Column2.HeaderText = "Паспортные данные";
-			this.Column2.MinimumWidth = 6;
-			this.Column2.Name = "Column2";
-			this.Column2.ReadOnly = true;
-			this.Column2.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
-			this.Column2.Width = 125;
+			this._btnReadExcel.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
+			this._btnReadExcel.Location = new System.Drawing.Point(542, 743);
+			this._btnReadExcel.Name = "_btnReadExcel";
+			this._btnReadExcel.Size = new System.Drawing.Size(393, 46);
+			this._btnReadExcel.TabIndex = 45;
+			this._btnReadExcel.Text = "Чтение из таблицы Excel";
+			this._btnReadExcel.UseVisualStyleBackColor = true;
+			this._btnReadExcel.Click += new System.EventHandler(this._btnReadExcel_Click);
 			// 
-			// Column3
+			// openFileDialog1
 			// 
-			this.Column3.HeaderText = "Дата выдачи";
-			this.Column3.MinimumWidth = 6;
-			this.Column3.Name = "Column3";
-			this.Column3.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
-			this.Column3.Width = 125;
-			// 
-			// Column4
-			// 
-			this.Column4.HeaderText = "Дата возврата";
-			this.Column4.MinimumWidth = 6;
-			this.Column4.Name = "Column4";
-			this.Column4.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
-			this.Column4.Width = 125;
+			this.openFileDialog1.FileName = "openFileDialog1";
 			// 
 			// Register
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(1501, 763);
+			this.ClientSize = new System.Drawing.Size(1501, 801);
+			this.Controls.Add(this._btnReadExcel);
+			this.Controls.Add(this._btnSaveExcel);
 			this.Controls.Add(this.richTextBox1);
 			this.Controls.Add(this._btnExecute2);
 			this.Controls.Add(this._txtInputE2);
@@ -465,5 +497,9 @@ namespace DataBase
 		private System.Windows.Forms.DataGridViewTextBoxColumn Column2;
 		private System.Windows.Forms.DataGridViewTextBoxColumn Column3;
 		private System.Windows.Forms.DataGridViewTextBoxColumn Column4;
+		private System.Windows.Forms.Button _btnSaveExcel;
+		private System.Windows.Forms.Button _btnReadExcel;
+		private System.Windows.Forms.SaveFileDialog saveFileDialog1;
+		private System.Windows.Forms.OpenFileDialog openFileDialog1;
 	}
 }

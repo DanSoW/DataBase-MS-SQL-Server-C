@@ -8,6 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using Excel = Microsoft.Office.Interop.Excel;
 
 namespace DataBase
 {
@@ -46,6 +47,9 @@ namespace DataBase
 			}
 			
 			dataGridView1.CellValueChanged += dataGridView1_CellValueChanged;
+
+			openFileDialog1.Filter = "Excel files(*.xlsx)|*.xlsx|All files(*.*)|*.*";
+			saveFileDialog1.Filter = "Excel files(*.xlsx)|*.xlsx|All files(*.*)|*.*";
 		}
 
 		private void Register_FormClosing(object sender, FormClosingEventArgs e)
@@ -461,7 +465,7 @@ namespace DataBase
 					sqlReader.Close();
 				}
 
-				for (int i = 0; i < (dataGridView2.Rows.Count-1); i++)
+				for (int i = 0; i < dataGridView2.Rows.Count; i++)
 				{
 					using (SqlCommand command2 = new SqlCommand("dbo.DefineBookCounter", sqlConnection))
 					{
@@ -656,6 +660,104 @@ namespace DataBase
 			DataGridViewRow row = Reader.CloneWithValues(dataGridView1.Rows[index]);
 			for (int i = 0; i < row.Cells.Count; i++)
 				_copyData.Rows[index].Cells[i].Value = row.Cells[i].Clone();
+		}
+
+
+		private void _btnSaveExcel_Click(object sender, EventArgs e)
+		{
+			if(dataGridView2.Rows.Count == 0)
+			{
+				MessageBox.Show("Ошибка: нет данных для сохранения!", "Ошибка!",
+							MessageBoxButtons.OK, MessageBoxIcon.Error);
+				return;
+			}
+
+			if (saveFileDialog1.ShowDialog() == DialogResult.Cancel)
+				return;
+
+			string filename = saveFileDialog1.FileName;
+			Excel.Application excelApp = new Excel.Application();
+			excelApp.Workbooks.Add();
+			Excel.Worksheet workSheet = excelApp.ActiveSheet;
+
+			workSheet.Cells[1, "A"] = "ФИО";
+			workSheet.Cells[1, "B"] = "Паспортные данные";
+			workSheet.Cells[1, "C"] = "Регистрационный номер книги";
+			workSheet.Cells[1, "D"] = "Дата выдачи";
+			workSheet.Cells[1, "E"] = "Дата возврата";
+			workSheet.Cells[1, "F"] = "Количество выданных книг";
+
+			for(int i = 0; i < dataGridView2.Rows.Count; i++)
+			{
+				workSheet.Cells[(i + 2), "A"] = dataGridView2.Rows[i].Cells[0].Value.ToString();
+				workSheet.Cells[(i + 2), "B"] = dataGridView2.Rows[i].Cells[1].Value.ToString();
+				workSheet.Cells[(i + 2), "C"] = dataGridView2.Rows[i].Cells[2].Value.ToString();
+				workSheet.Cells[(i + 2), "D"] = dataGridView2.Rows[i].Cells[3].Value.ToString();
+				workSheet.Cells[(i + 2), "E"] = dataGridView2.Rows[i].Cells[4].Value.ToString();
+				workSheet.Cells[(i + 2), "F"] = dataGridView2.Rows[i].Cells[5].Value.ToString();
+			}
+
+			try
+			{
+				workSheet.SaveAs(filename);
+				MessageBox.Show("Данные сохранены!", "Информация",
+							MessageBoxButtons.OK, MessageBoxIcon.Information);
+			}
+			catch(Exception)
+			{
+				MessageBox.Show("Ошибка: неудалось сохранить файл!", "Ошибка!",
+							MessageBoxButtons.OK, MessageBoxIcon.Error);
+			}
+			excelApp.Quit();
+			System.Runtime.InteropServices.Marshal.ReleaseComObject(excelApp);
+		}
+
+		private void _btnReadExcel_Click(object sender, EventArgs e)
+		{
+			if (openFileDialog1.ShowDialog() == DialogResult.Cancel)
+				return;
+
+			dataGridView2.Rows.Clear();
+
+			string filename = openFileDialog1.FileName;
+
+			Excel.Application excelApp = new Excel.Application();
+			Excel.Workbook excelBook = excelApp.Workbooks.Open(filename);
+			Excel._Worksheet excelSheet = excelBook.Sheets[1];
+			Excel.Range excelRange = excelSheet.UsedRange;
+
+			int rows = excelRange.Rows.Count;
+			int cols = excelRange.Columns.Count;
+			List<List<string>> maping = new List<List<string>>();
+			for (int i = 1; i <= rows; i++)
+			{
+				maping.Add(new List<string>());
+				for (int j = 1; j <= cols; j++)
+				{
+					if (excelRange.Cells[i, j] != null && excelRange.Cells[i, j].Value2 != null)
+						maping[(i-1)].Add(excelRange.Cells[i, j].Value2.ToString());
+				}
+			}
+
+			excelBook.Close();
+			excelApp.Quit();
+			System.Runtime.InteropServices.Marshal.ReleaseComObject(excelApp);
+
+			for (int i = 1; i < maping.Count; i++)
+			{
+				dataGridView2.Rows.Add(
+					maping[i][0],
+					maping[i][1],
+					maping[i][2],
+					maping[i][3],
+					maping[i][4],
+					maping[i][5]);
+			}
+
+			dataGridView2.Refresh();
+
+			MessageBox.Show("Данные считаны!", "Информация",
+							MessageBoxButtons.OK, MessageBoxIcon.Information);
 		}
 	}
 
