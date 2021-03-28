@@ -18,8 +18,6 @@ namespace DataBase
 		private static Reader reader;
 		private static Book book;
 
-		private bool _editor = true;
-		private bool _view = false;
 		private DataGridView _copyData = null;
 
 		public Register()
@@ -33,6 +31,21 @@ namespace DataBase
 			_copyData.Columns.Add("Column4", "Data_Return");
 
 			this.FormClosing += Register_FormClosing;
+
+			DataGridView d = readDataFromDB();
+			dataGridView1.Rows.Clear();
+			_copyData.Rows.Clear();
+
+			if (d.Rows.Count > 1)
+			{
+				for (int i = 0; i < (d.Rows.Count - 1); i++)
+					_copyData.Rows.Add(Reader.CloneWithValues(d.Rows[i]));
+
+				for (int i = 0; i < (d.Rows.Count-1); i++)
+					dataGridView1.Rows.Add(Reader.CloneWithValues(d.Rows[i]));
+			}
+			
+			dataGridView1.CellValueChanged += dataGridView1_CellValueChanged;
 		}
 
 		private void Register_FormClosing(object sender, FormClosingEventArgs e)
@@ -73,13 +86,6 @@ namespace DataBase
 
 		private void _btnDelete_Click(object sender, EventArgs e)
 		{
-			if (_view)
-			{
-				MessageBox.Show("Ошибка: в режиме просмотра не возможно удалять данные из таблице!", "Ошибка!",
-					MessageBoxButtons.OK, MessageBoxIcon.Error);
-				return;
-			}
-
 			if (dataGridView1.CurrentRow == null)
 			{
 				MessageBox.Show("Ошибка: не выбрана строка для удаления", "Ошибка!",
@@ -87,15 +93,24 @@ namespace DataBase
 				return;
 			}
 
-			try
+			int index = dataGridView1.CurrentRow.Index;
+
+			String pwd = dataGridView1.Rows[index].Cells[0].Value.ToString();
+			using (SqlConnection sqlConnection = new SqlConnection("Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=DataBaseSQL;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False"))
 			{
-				dataGridView1.Rows.RemoveAt(dataGridView1.CurrentRow.Index);
+				sqlConnection.Open();
+
+				using (SqlCommand sqlCMD = new SqlCommand("dbo.DeleteRegisterData", sqlConnection))
+				{
+					sqlCMD.CommandType = System.Data.CommandType.StoredProcedure;
+
+					sqlCMD.Parameters.AddWithValue("@id", index);
+					sqlCMD.ExecuteNonQuery();
+				}
+				sqlConnection.Close();
 			}
-			catch (Exception)
-			{
-				MessageBox.Show("Ошибка: удаление данной строки невозможно!", "Ошибка!",
-					MessageBoxButtons.OK, MessageBoxIcon.Error);
-			}
+			_copyData.Rows.RemoveAt(index);
+			dataGridView1.Rows.RemoveAt(index);
 		}
 
 		private bool CheckData()
@@ -132,8 +147,28 @@ namespace DataBase
 			return flag;
 		}
 
+		private bool CheckOrientedData(String reg, String pwd, String dateIssue, String dateReturn)
+		{
+			if ((!Reader.passwordDataValidate(pwd))
+				|| (!Book.registerNumberValidate(reg))
+				|| (!checkDateEntry(dateIssue))
+				|| (!checkDateEntry(dateReturn)))
+				return false;
+			try
+			{
+				long.Parse(reg);
+				long.Parse(pwd);
+			}
+			catch (Exception) { return false; }
+
+			return true;
+		}
+
 		private bool checkDateEntry(String date)
 		{
+			if (date.Length != MAX_SIZE_DATA)
+				return false;
+
 			if(date.Count((char i) => (i == '.')) != 2)
 			{
 				return false;
@@ -169,13 +204,6 @@ namespace DataBase
 
 		private void _btnInput_Click(object sender, EventArgs e)
 		{
-			if (_view)
-			{
-				MessageBox.Show("Ошибка: в режиме просмотра не возможно добавлять данные в таблицу!", "Ошибка!",
-					MessageBoxButtons.OK, MessageBoxIcon.Error);
-				return;
-			}
-
 			if (!Reader.CheckTextBoxes(new List<TextBox> { _txtPasswData1, _txtPasswData2, _txtDataIssue, _txtDataReturn }))
 			{
 				MessageBox.Show("Ошибка: не все текстовые поля заполнены!", "Ошибка!",
@@ -211,31 +239,77 @@ namespace DataBase
 				return;
 			}
 
-			string[] dateString = _txtDataIssue.Text.Split(new char[] { '.' });
-			DateTime date1 = new DateTime(int.Parse(dateString[2]), int.Parse(dateString[1]),
-				int.Parse(dateString[0]));
-			dateString = _txtDataReturn.Text.Split(new char[] { '.' });
-			DateTime date2 = new DateTime(int.Parse(dateString[2]), int.Parse(dateString[1]),
-				int.Parse(dateString[0]));
-
-			if(DateTime.Compare(date1, date2) > 0)
+			if (addDataToDataBase(_txtPasswData1.Text, _txtPasswData2.Text, _txtDataIssue.Text, _txtDataReturn.Text))
 			{
-				MessageBox.Show("Ошибка: дата выдачи не может быть позже даты возврата!", "Ошибка!",
+				_copyData.Rows.Add(_txtPasswData1.Text, _txtPasswData2.Text, _txtDataIssue.Text, _txtDataReturn.Text);
+				dataGridView1.Rows.Add(_txtPasswData1.Text, _txtPasswData2.Text, _txtDataIssue.Text, _txtDataReturn.Text);
+			}
+		}
+
+		private bool addDataToDataBase(String reg, String pwd, String dateIssue, String dateReturn)
+		{
+			if (!CheckOrientedData(reg, pwd, dateIssue, dateReturn))
+			{
+				MessageBox.Show("Ошибка: добавление записи невозможно! Запись содержит не корректные данные!",
+					"Ошибка!",
 					MessageBoxButtons.OK, MessageBoxIcon.Error);
-				return;
+				return false;
 			}
 
-			dataGridView1.Rows.Add(_txtPasswData1.Text, _txtPasswData2.Text, _txtDataIssue.Text, _txtDataReturn.Text);
+			using (SqlConnection sqlConnection = new SqlConnection("Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=DataBaseSQL;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False"))
+			{
+				sqlConnection.Open();
+
+				string[] dateString = dateIssue.Split(new char[] { '.' });
+				DateTime date1 = new DateTime(int.Parse(dateString[2]), int.Parse(dateString[1]),
+							int.Parse(dateString[0]));
+
+				dateString = dateReturn.Split(new char[] { '.' });
+				DateTime date2 = new DateTime(int.Parse(dateString[2]), int.Parse(dateString[1]),
+							int.Parse(dateString[0]));
+				using (SqlCommand sqlCMD = new SqlCommand("dbo.WriteRegisterData", sqlConnection))
+				{
+					sqlCMD.CommandType = System.Data.CommandType.StoredProcedure;
+
+					SqlParameter valueReturn = new SqlParameter("valueReturn", SqlDbType.Int);
+					valueReturn.Direction = ParameterDirection.ReturnValue;
+
+					sqlCMD.Parameters.Add(valueReturn);
+					sqlCMD.Parameters.AddWithValue("@id", dataGridView1.Rows.Count);
+					sqlCMD.Parameters.AddWithValue("@reg", long.Parse(reg));
+					sqlCMD.Parameters.AddWithValue("@pwd", long.Parse(pwd));
+					sqlCMD.Parameters.AddWithValue("@dateIssue", date1);
+					sqlCMD.Parameters.AddWithValue("@dateReturn", date2);
+					sqlCMD.ExecuteScalar();
+
+					int result = Convert.ToInt32(valueReturn.Value);
+
+					string[] names = { "регистрационные данные", "паспортные данные" };
+
+					if((result < 0) && (result > (-3)))
+					{
+						MessageBox.Show("Ошибка: в записи содержаться не существующие "
+							+ names[(result == (-2))? 0 : 1] + "!", "Ошибка!",
+						MessageBoxButtons.OK, MessageBoxIcon.Error);
+						sqlConnection.Close();
+						return false;
+					}else if(result == (-3))
+					{
+						MessageBox.Show("Ошибка: дата возврата не может быть раньше даты получения!", "Ошибка!",
+						MessageBoxButtons.OK, MessageBoxIcon.Error);
+						sqlConnection.Close();
+						return false;
+					}
+				}
+
+				sqlConnection.Close();
+			}
+
+			return true;
 		}
 
 		private void _txtPasswData1_KeyPress(object sender, KeyPressEventArgs e)
 		{
-			if (_view)
-			{
-				e.Handled = true;
-				return;
-			}
-
 			char number = e.KeyChar;
 
 			if (!Char.IsDigit(number) && (number != 8))
@@ -246,12 +320,6 @@ namespace DataBase
 
 		private void _txtPasswData2_KeyPress(object sender, KeyPressEventArgs e)
 		{
-			if (_view)
-			{
-				e.Handled = true;
-				return;
-			}
-
 			char number = e.KeyChar;
 
 			if (!Char.IsDigit(number) && (number != 8))
@@ -260,7 +328,7 @@ namespace DataBase
 				e.Handled = true;
 		}
 
-		public DataGridView readDataFromDB(bool del = false)
+		public DataGridView readDataFromDB()
 		{
 			DataGridView data = new DataGridView();
 			data.Columns.Add("Column1", "Register_Number");
@@ -268,16 +336,14 @@ namespace DataBase
 			data.Columns.Add("Column3", "Data_Issue");
 			data.Columns.Add("Column4", "Data_Return");
 
-			using (SqlConnection sqlConnection = new SqlConnection("Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=master;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False"))
+			using (SqlConnection sqlConnection = new SqlConnection("Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=DataBaseSQL;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False"))
 			{
 				sqlConnection.Open();
-				using (SqlCommand cmd = new SqlCommand("USE DataBaseSQL", sqlConnection))
-				{
-					cmd.ExecuteNonQuery();
-				}
 
-				using (SqlCommand command = new SqlCommand("SELECT * FROM dbo.RecordRegistration", sqlConnection))
+				using (SqlCommand command = new SqlCommand("dbo.ReadRegisterData", sqlConnection))
 				{
+					command.CommandType = System.Data.CommandType.StoredProcedure;
+
 					SqlDataReader sqlReader = command.ExecuteReader();
 					if (sqlReader.HasRows)
 					{
@@ -300,136 +366,14 @@ namespace DataBase
 					sqlReader.Close();
 				}
 
-				if (del)
-				{
-					using (SqlCommand cmd = new SqlCommand("DELETE FROM dbo.RecordRegistration;" +
-					" DBCC CHECKIDENT ('dbo.RecordRegistration', RESEED, 0)", sqlConnection))
-					{
-						cmd.ExecuteNonQuery();
-					}
-				}
+				sqlConnection.Close();
 			}
 
 			return data;
 		}
 
-		private void _btnAddToBD_Click(object sender, EventArgs e)
-		{
-			if (_view)
-			{
-				MessageBox.Show("Ошибка: в режиме просмотра не возможно добавлять данные в таблицу!", "Ошибка!",
-					MessageBoxButtons.OK, MessageBoxIcon.Error);
-				return;
-			}
-
-			if (!CheckData())
-			{
-				MessageBox.Show("Ошибка: добавление строк невозможно, так как в таблице содержаться" +
-					" не корректные данные", "Ошибка!",
-					MessageBoxButtons.OK, MessageBoxIcon.Error);
-				return;
-			}
-
-			DataGridView dataBook = Book.readDataFromDB();
-
-			using (SqlConnection sqlConnection = new SqlConnection("Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=master;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False"))
-			{
-				sqlConnection.Open();
-				using (SqlCommand cmd = new SqlCommand("USE DataBaseSQL", sqlConnection))
-				{
-					cmd.ExecuteNonQuery();
-				}
-
-				for (int i = 0; i < (dataGridView1.Rows.Count - 1); i++)
-				{
-					string[] dateString = dataGridView1.Rows[i].Cells[2].Value.ToString().Split(new char[] { '.' });
-					DateTime date1 = new DateTime(int.Parse(dateString[2]), int.Parse(dateString[1]),
-								int.Parse(dateString[0]));
-
-					dateString = dataGridView1.Rows[i].Cells[3].Value.ToString().Split(new char[] { '.' });
-					DateTime date2 = new DateTime(int.Parse(dateString[2]), int.Parse(dateString[1]),
-								int.Parse(dateString[0]));
-					bool flag = true;
-					for(int j = 0; j < (dataBook.Rows.Count - 1); j++)
-					{
-						if (dataBook.Rows[j].Cells[0].Value.ToString().Equals(dataGridView1.Rows[i].Cells[0].Value.ToString()))
-						{
-							int yearPublish = int.Parse(dataBook.Rows[j].Cells[2].Value.ToString());
-
-							if (date1.Year < yearPublish)
-							{
-								flag = false;
-								MessageBox.Show("Ошибка: не возможно добавить запись с регистрационным номером "
-								+ dataGridView1.Rows[i].Cells[0].Value.ToString() + " и с паспортными данными "
-								+ dataGridView1.Rows[i].Cells[1].Value.ToString() + " , так как" +
-								" дата выдачи книги не может быть позже даты её выдачи ", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
-							}
-						}
-					}
-
-					if (flag)
-					{
-						using (SqlCommand sqlCMD = new SqlCommand("INSERT INTO dbo.RecordRegistration (Book_Register_Number, Reader_Password_Data, Date_Issue, Date_Return) VALUES (@reg, @pwd, @dissue, @dreturn);", sqlConnection))
-						{
-							try
-							{
-								sqlCMD.Parameters.AddWithValue("@reg", long.Parse(dataGridView1.Rows[i].Cells[0].Value.ToString()));
-								sqlCMD.Parameters.AddWithValue("@pwd", long.Parse(dataGridView1.Rows[i].Cells[1].Value.ToString()));
-								sqlCMD.Parameters.AddWithValue("@dissue", date1);
-								sqlCMD.Parameters.AddWithValue("@dreturn", date2);
-								sqlCMD.ExecuteNonQuery();
-							}
-							catch (System.Data.SqlClient.SqlException)
-							{
-								MessageBox.Show("Ошибка: не возможно добавить запись с регистрационным номером "
-									+ dataGridView1.Rows[i].Cells[0].Value.ToString() + " и с паспортными данными "
-									+ dataGridView1.Rows[i].Cells[1].Value.ToString() + " , так как отсутствуют либо" +
-									" введённые паспортные данные или регистрационный номер книги в соответствующих " +
-									" таблицах (Читатель и Книга)", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
-							}
-						}
-					}
-				}
-			}
-
-			dataGridView1.Rows.Clear();
-			MessageBox.Show("Записи добавлены!", "Информация",
-					MessageBoxButtons.OK, MessageBoxIcon.Information);
-		}
-
-		private void _btnReadFromDB_Click(object sender, EventArgs e)
-		{
-			if (_view)
-			{
-				MessageBox.Show("Ошибка: в режиме просмотра не возможно считать данные из таблицы!", "Ошибка!",
-					MessageBoxButtons.OK, MessageBoxIcon.Error);
-				return;
-			}
-
-			DataGridView d = readDataFromDB(true);
-			if ((d.Rows.Count - 1) <= 0)
-			{
-				MessageBox.Show("Ошибка: в базе данных нет записей!", "Ошибка!",
-					   MessageBoxButtons.OK, MessageBoxIcon.Error);
-				return;
-			}
-
-			dataGridView1.Rows.Clear();
-			for (int i = 0; i < (d.Rows.Count - 1); i++)
-				dataGridView1.Rows.Add(Reader.CloneWithValues(d.Rows[i]));
-
-			MessageBox.Show("Все данные считаны!", "Информация",
-					MessageBoxButtons.OK, MessageBoxIcon.Information);
-		}
-
 		private void _txtDataIssue_KeyPress(object sender, KeyPressEventArgs e)
 		{
-			if (_view)
-			{
-				e.Handled = true;
-				return;
-			}
-
 			char number = e.KeyChar;
 
 			if (!Char.IsDigit(number) && (number != '.') && (number != 8))
@@ -440,65 +384,12 @@ namespace DataBase
 
 		private void _txtDataReturn_KeyPress(object sender, KeyPressEventArgs e)
 		{
-			if (_view)
-			{
-				e.Handled = true;
-				return;
-			}
-
 			char number = e.KeyChar;
 
 			if (!Char.IsDigit(number) && (number != '.') && (number != 8))
 				e.Handled = true;
 			if ((number != 8) && (_txtDataReturn.Text + number).Length > MAX_SIZE_DATA)
 				e.Handled = true;
-		}
-
-		private void _btnRedactor_Click(object sender, EventArgs e)
-		{
-			if (_editor)
-			{
-				MessageBox.Show("Вы уже находитесь в режиме редактора", "Информация",
-						MessageBoxButtons.OK, MessageBoxIcon.Information);
-				return;
-			}
-			_editor = true;
-			_view = false;
-
-			dataGridView1.Rows.Clear();
-			for (int i = 0; i < (_copyData.Rows.Count - 1); i++)
-				dataGridView1.Rows.Add(Reader.CloneWithValues(_copyData.Rows[i]));
-			_copyData.Rows.Clear();
-		}
-
-		private void _btnView_Click(object sender, EventArgs e)
-		{
-			if (_view)
-			{
-				MessageBox.Show("Вы уже находитесь в режиме просмотра", "Информация",
-						MessageBoxButtons.OK, MessageBoxIcon.Information);
-				return;
-			}
-			_editor = false;
-			_view = true;
-			_copyData.Rows.Clear();
-			for (int i = 0; i < (dataGridView1.Rows.Count - 1); i++)
-				_copyData.Rows.Add(Reader.CloneWithValues(dataGridView1.Rows[i]));
-
-			DataGridView d = readDataFromDB();
-			if ((d.Rows.Count - 1) <= 0)
-			{
-				MessageBox.Show("Ошибка: в базе данных нет записей!", "Ошибка!",
-					   MessageBoxButtons.OK, MessageBoxIcon.Error);
-				return;
-			}
-
-			dataGridView1.Rows.Clear();
-			for (int i = 0; i < (d.Rows.Count - 1); i++)
-				dataGridView1.Rows.Add(Reader.CloneWithValues(d.Rows[i]));
-
-			MessageBox.Show("Данные для режима просмотра считаны!", "Информация",
-					MessageBoxButtons.OK, MessageBoxIcon.Information);
 		}
 
 		private void textBox1_KeyPress(object sender, KeyPressEventArgs e)
@@ -535,103 +426,60 @@ namespace DataBase
 					   MessageBoxButtons.OK, MessageBoxIcon.Error);
 				return;
 			}
-
-			DataGridView data = readDataFromDB(),
-				readers = Reader.readDataFromDB();
-			if ((data.Rows.Count - 1) <= 0)
-			{
-				MessageBox.Show("Ошибка: в базе данных нет записей!", "Ошибка!",
-					   MessageBoxButtons.OK, MessageBoxIcon.Error);
-				return;
-			}
-
 			dataGridView2.Rows.Clear();
 
-			for (int i = 0; i < (data.Rows.Count-1); i++)
+			using (SqlConnection sqlConnection = new SqlConnection("Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=DataBaseSQL;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False"))
 			{
-				int index = (-1);
-				for(int j = 0; (index < 0) && (j < (readers.Rows.Count - 1)); j++)
+				sqlConnection.Open();
+
+				using (SqlCommand command = new SqlCommand("dbo.TaskOneT", sqlConnection))
 				{
-					if(readers.Rows[j].Cells[0].Value.ToString().Equals(
-						data.Rows[i].Cells[1].Value.ToString()))
+					command.CommandType = System.Data.CommandType.StoredProcedure;
+					
+					command.Parameters.AddWithValue("@monthValue", int.Parse(textBox1.Text));
+					SqlDataReader sqlReader = command.ExecuteReader();
+					if (sqlReader.HasRows)
 					{
-						index = j;
-					}
-				}
-
-				if (index < 0)
-					continue;
-
-				String dataIssue = data.Rows[i].Cells[2].Value.ToString(),
-					dataReturn = data.Rows[i].Cells[3].Value.ToString();
-
-				if ((int.Parse(dataReturn.Split(new char[] { '.' })[1]) - int.Parse(dataIssue.Split(new char[] { '.' })[1]))
-					> int.Parse(textBox1.Text))
-				{
-					dataGridView2.Rows.Add(
-								readers.Rows[index].Cells[readers.Rows[index].Cells.Count - 1].Value.ToString(),
-								readers.Rows[index].Cells[0].Value.ToString(),
-								data.Rows[i].Cells[0].Value.ToString(),
-								dataIssue,
-								dataReturn,
-								numberBorrowedBooks(readers.Rows[index].Cells[0].Value.ToString()).ToString()
-								);
-					/*for(int j = 0; j < (readers.Rows.Count-1); j++)
-					{
-						if(readers.Rows[j].Cells[0].Value.ToString().Equals(
-							data.Rows[i].Cells[0].Value.ToString()))
+						while (sqlReader.Read())
 						{
-							dataGridView2.Rows.Add(
-								readers.Rows[j].Cells[readers.Rows[j].Cells.Count - 1].Value.ToString(),
-								readers.Rows[j].Cells[0].Value.ToString(),
-								data.Rows[i].Cells[0].Value.ToString(),
-								dataIssue,
-								dataReturn,
-								numberBorrowedBooks(readers.Rows[j].Cells[0].Value.ToString()).ToString()
-								);
+							String fullName = sqlReader.GetValue(0).ToString();
+							String pwd = sqlReader.GetValue(1).ToString();
+							String reg = sqlReader.GetValue(2).ToString();
+
+							while (pwd.Length != 10)
+								pwd = ("0" + pwd);
+
+							while (reg.Length != 10)
+								reg = ("0" + reg);
+
+							dataGridView2.Rows.Add(fullName, pwd, reg,
+								sqlReader.GetValue(3).ToString().Split(new char[] { ' ' })[0],
+								sqlReader.GetValue(4).ToString().Split(new char[] { ' ' })[0],
+								"0");
 						}
-					}*/
+					}
+					sqlReader.Close();
 				}
-				else
+
+				for (int i = 0; i < (dataGridView2.Rows.Count-1); i++)
 				{
-					int year = (int.Parse(dataReturn.Split(new char[] { '.' })[2]) - int.Parse(dataIssue.Split(new char[] { '.' })[2]));
-					int month = int.Parse(textBox1.Text);
-					int yearsBook = 0;
-					while (month >= 12)
+					using (SqlCommand command2 = new SqlCommand("dbo.DefineBookCounter", sqlConnection))
 					{
-						month -= 12;
-						yearsBook++;
-					}
+						command2.CommandType = System.Data.CommandType.StoredProcedure;
 
-					if(year > yearsBook)
-					{
-						dataGridView2.Rows.Add(
-								readers.Rows[index].Cells[readers.Rows[index].Cells.Count - 1].Value.ToString(),
-								readers.Rows[index].Cells[0].Value.ToString(),
-								data.Rows[i].Cells[0].Value.ToString(),
-								dataIssue,
-								dataReturn,
-								numberBorrowedBooks(readers.Rows[index].Cells[0].Value.ToString()).ToString()
-								);
-						/*for (int j = 0; j < (readers.Rows.Count - 1); j++)
-						{
-							if (readers.Rows[j].Cells[0].Value.ToString().Equals(
-								data.Rows[i].Cells[0].Value.ToString()))
-							{
-								dataGridView2.Rows.Add(
-									readers.Rows[j].Cells[readers.Rows[j].Cells.Count - 1].Value.ToString(),
-									readers.Rows[j].Cells[0].Value.ToString(),
-									data.Rows[i].Cells[0].Value.ToString(),
-									dataIssue,
-									dataReturn,
-									numberBorrowedBooks(readers.Rows[j].Cells[0].Value.ToString()).ToString()
-									);
-							}
-						}*/
+						SqlParameter valueReturn = new SqlParameter("valueReturn", SqlDbType.Int);
+						valueReturn.Direction = ParameterDirection.ReturnValue;
+
+						command2.Parameters.Add(valueReturn);
+						command2.Parameters.AddWithValue("@pwd", long.Parse(dataGridView2.Rows[i].Cells[1].Value.ToString()));
+						command2.ExecuteScalar();
+
+						dataGridView2.Rows[i].Cells[dataGridView2.Rows[i].Cells.Count - 1].Value = Convert.ToString(valueReturn.Value);
 					}
 				}
-			}
 
+				sqlConnection.Close();
+			}
 		}
 
 		private void _txtInputE2_KeyPress(object sender, KeyPressEventArgs e)
@@ -654,43 +502,40 @@ namespace DataBase
 			}
 			richTextBox1.Clear();
 
-			DataGridView infoData = readDataFromDB(),
-				books = Book.readDataFromDB();
 			List<DataElement> elements = new List<DataElement>();
 
-			int infoIndex = 0;
-			while (infoIndex >= 0)
+			using (SqlConnection sqlConnection = new SqlConnection("Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=DataBaseSQL;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False"))
 			{
-				infoIndex = (-1);
-				for (int i = 0; (infoIndex < 0) && (i < (infoData.Rows.Count - 1)); i++)
+				sqlConnection.Open();
+
+				using (SqlCommand command = new SqlCommand("dbo.TaskTwot", sqlConnection))
 				{
-					if (infoData.Rows[i].Cells[1].Value.ToString().Equals(_txtInputE2.Text))
+					command.CommandType = System.Data.CommandType.StoredProcedure;
+					command.Parameters.AddWithValue("@pwd", long.Parse(_txtInputE2.Text));
+					SqlDataReader sqlReader = command.ExecuteReader();
+					if (sqlReader.HasRows)
 					{
-						infoIndex = i;
+						while (sqlReader.Read())
+						{
+							String reg = sqlReader.GetValue(0).ToString();
+
+							while (reg.Length != 10)
+								reg = ("0" + reg);
+
+							elements.Add(new DataElement(reg,
+								sqlReader.GetValue(1).ToString().Split(new char[] { ' ' })[0],
+							int.Parse(sqlReader.GetValue(2).ToString()),
+							sqlReader.GetValue(3).ToString()));
+						}
 					}
+					sqlReader.Close();
 				}
 
-				for (int j = 0; (j < (books.Rows.Count - 1)) && (infoIndex >= 0); j++)
-					{
-					if (books.Rows[j].Cells[0].Value.ToString().Equals(
-						infoData.Rows[infoIndex].Cells[0].Value.ToString()))
-					{
-						elements.Add(new DataElement(
-						books.Rows[j].Cells[0].Value.ToString(),
-						infoData.Rows[infoIndex].Cells[2].Value.ToString(),
-						int.Parse(books.Rows[j].Cells[1].Value.ToString()),
-						books.Rows[j].Cells[(books.Rows[j].Cells.Count - 1)].Value.ToString()));
-					}
-				}
-
-				if (infoIndex >= 0)
-				{
-					infoData.Rows.RemoveAt(infoIndex);
-				}
+				sqlConnection.Close();
 			}
 
 			elements.Sort(new Comparison<DataElement>(compare));
-			for(int i = 0; i < elements.Count; i++)
+			for (int i = 0; i < elements.Count; i++)
 			{
 				richTextBox1.Text = richTextBox1.Text + elements[i].ToString() + "\n";
 			}
@@ -707,6 +552,110 @@ namespace DataBase
 				int.Parse(dateString[0]));
 
 			return date1.CompareTo(date2);
+		}
+
+		private void reloadDatabase(bool flag = false)
+		{
+			DataGridView d = readDataFromDB();
+			if (d.Rows.Count > 1)
+			{
+				dataGridView1.Rows.Clear();
+				_copyData.Rows.Clear();
+				for (int i = 0; i < (d.Rows.Count - 1); i++)
+				{
+					_copyData.Rows.Add(Reader.CloneWithValues(d.Rows[i]));
+					dataGridView1.Rows.Add(Reader.CloneWithValues(d.Rows[i]));
+				}
+			}
+
+			if(flag)
+				dataGridView1.Refresh();
+		}
+
+		private void dataGridView1_CellValueChanged(object sender, DataGridViewCellEventArgs e)
+		{
+			if (dataGridView1.Rows.Count <= 1)
+				return;
+			int index = e.RowIndex;
+			if (index == dataGridView1.Rows.Count)
+				return;
+			bool flag = true;
+			for (int i = 0; (i < dataGridView1.Rows[index].Cells.Count) && (flag); i++)
+				if (!(dataGridView1.Rows[index].Cells[i].Value.ToString().Equals(
+					_copyData.Rows[index].Cells[i].Value.ToString())))
+					flag = false;
+			if (flag)
+				return;
+
+			if ((!Reader.checkRow(dataGridView1.Rows[index])) || (!CheckOrientedData(
+				dataGridView1.Rows[index].Cells[0].Value.ToString(),
+				dataGridView1.Rows[index].Cells[1].Value.ToString(),
+				dataGridView1.Rows[index].Cells[2].Value.ToString(),
+				dataGridView1.Rows[index].Cells[3].Value.ToString())))
+			{
+				reloadDatabase(true);
+				MessageBox.Show("Ошибка: введены не корректные параметры! Изменение данных не возможно осуществить!", "Ошибка!",
+							MessageBoxButtons.OK, MessageBoxIcon.Error);
+				return;
+			}
+
+			using (SqlConnection sqlConnection = new SqlConnection("Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=DataBaseSQL;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False"))
+			{
+				sqlConnection.Open();
+
+				using (SqlCommand sqlCMD = new SqlCommand("dbo.UpdateRegisterData", sqlConnection))
+				{
+					sqlCMD.CommandType = System.Data.CommandType.StoredProcedure;
+
+					string[] dateString = dataGridView1.Rows[index].Cells[2].Value.ToString().Split(new char[] { '.' });
+					DateTime date1 = new DateTime(int.Parse(dateString[2]),
+						int.Parse(dateString[1]),
+						int.Parse(dateString[0]));
+					dateString = dataGridView1.Rows[index].Cells[3].Value.ToString().Split(new char[] { '.' });
+
+					DateTime date2 = new DateTime(int.Parse(dateString[2]),
+						int.Parse(dateString[1]),
+						int.Parse(dateString[0]));
+
+					SqlParameter valueReturn = new SqlParameter("valueReturn", SqlDbType.Int);
+					valueReturn.Direction = ParameterDirection.ReturnValue;
+
+					sqlCMD.Parameters.Add(valueReturn);
+					sqlCMD.Parameters.AddWithValue("@id", index);
+					sqlCMD.Parameters.AddWithValue("@reg", long.Parse(dataGridView1.Rows[index].Cells[0].Value.ToString()));
+					sqlCMD.Parameters.AddWithValue("@pwd", long.Parse(dataGridView1.Rows[index].Cells[1].Value.ToString()));
+					sqlCMD.Parameters.AddWithValue("@dateIssue", date1);
+					sqlCMD.Parameters.AddWithValue("@dateReturn", date2);
+					sqlCMD.ExecuteScalar();
+
+					int result = Convert.ToInt32(valueReturn.Value);
+
+					string[] names = { "регистрационные данные", "паспортные данные" };
+					if ((result < 0) && (result > (-3)))
+					{
+						MessageBox.Show("Ошибка: в записи содержаться не существующие "
+							+ names[(result == (-2)) ? 0 : 1] + "!", "Ошибка!",
+						MessageBoxButtons.OK, MessageBoxIcon.Error);
+						sqlConnection.Close();
+						reloadDatabase(true);
+						return;
+					}
+					else if (result == (-3))
+					{
+						MessageBox.Show("Ошибка: дата возврата не может быть раньше даты получения!", "Ошибка!",
+						MessageBoxButtons.OK, MessageBoxIcon.Error);
+						sqlConnection.Close();
+						reloadDatabase(true);
+						return;
+					}
+				}
+
+				sqlConnection.Close();
+			}
+			dataGridView1.Refresh();
+			DataGridViewRow row = Reader.CloneWithValues(dataGridView1.Rows[index]);
+			for (int i = 0; i < row.Cells.Count; i++)
+				_copyData.Rows[index].Cells[i].Value = row.Cells[i].Clone();
 		}
 	}
 

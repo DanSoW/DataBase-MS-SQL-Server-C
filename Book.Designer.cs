@@ -47,10 +47,6 @@ namespace DataBase
 			this.label1 = new System.Windows.Forms.Label();
 			this._txtSection = new System.Windows.Forms.TextBox();
 			this.label4 = new System.Windows.Forms.Label();
-			this._btnAddToBD = new System.Windows.Forms.Button();
-			this._btnView = new System.Windows.Forms.Button();
-			this._btnRedactor = new System.Windows.Forms.Button();
-			this._btnReadFromDB = new System.Windows.Forms.Button();
 			this.menuStrip1.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
 			this.SuspendLayout();
@@ -83,6 +79,7 @@ namespace DataBase
 			// 
 			// dataGridView1
 			// 
+			this.dataGridView1.AllowUserToAddRows = false;
 			this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
 			this.dataGridView1.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.Column1,
@@ -102,6 +99,7 @@ namespace DataBase
 			this.Column1.HeaderText = "Регистрационный номер";
 			this.Column1.MinimumWidth = 6;
 			this.Column1.Name = "Column1";
+			this.Column1.ReadOnly = true;
 			this.Column1.Width = 125;
 			// 
 			// Column2
@@ -223,59 +221,11 @@ namespace DataBase
 			this.label4.TabIndex = 18;
 			this.label4.Text = "Раздел:";
 			// 
-			// _btnAddToBD
-			// 
-			this._btnAddToBD.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
-			this._btnAddToBD.Location = new System.Drawing.Point(17, 291);
-			this._btnAddToBD.Name = "_btnAddToBD";
-			this._btnAddToBD.Size = new System.Drawing.Size(456, 51);
-			this._btnAddToBD.TabIndex = 20;
-			this._btnAddToBD.Text = "Добавить в базу данных";
-			this._btnAddToBD.UseVisualStyleBackColor = true;
-			this._btnAddToBD.Click += new System.EventHandler(this._btnAddToBD_Click);
-			// 
-			// _btnView
-			// 
-			this._btnView.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
-			this._btnView.Location = new System.Drawing.Point(1053, 367);
-			this._btnView.Name = "_btnView";
-			this._btnView.Size = new System.Drawing.Size(226, 39);
-			this._btnView.TabIndex = 22;
-			this._btnView.Text = "Режим просмотра";
-			this._btnView.UseVisualStyleBackColor = true;
-			this._btnView.Click += new System.EventHandler(this._btnView_Click);
-			// 
-			// _btnRedactor
-			// 
-			this._btnRedactor.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
-			this._btnRedactor.Location = new System.Drawing.Point(531, 367);
-			this._btnRedactor.Name = "_btnRedactor";
-			this._btnRedactor.Size = new System.Drawing.Size(254, 39);
-			this._btnRedactor.TabIndex = 21;
-			this._btnRedactor.Text = "Режим редактирования";
-			this._btnRedactor.UseVisualStyleBackColor = true;
-			this._btnRedactor.Click += new System.EventHandler(this._btnRedactor_Click);
-			// 
-			// _btnReadFromDB
-			// 
-			this._btnReadFromDB.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
-			this._btnReadFromDB.Location = new System.Drawing.Point(17, 358);
-			this._btnReadFromDB.Name = "_btnReadFromDB";
-			this._btnReadFromDB.Size = new System.Drawing.Size(456, 48);
-			this._btnReadFromDB.TabIndex = 23;
-			this._btnReadFromDB.Text = "Считать из базы данных";
-			this._btnReadFromDB.UseVisualStyleBackColor = true;
-			this._btnReadFromDB.Click += new System.EventHandler(this._btnReadFromDB_Click);
-			// 
 			// Book
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(1303, 458);
-			this.Controls.Add(this._btnReadFromDB);
-			this.Controls.Add(this._btnView);
-			this.Controls.Add(this._btnRedactor);
-			this.Controls.Add(this._btnAddToBD);
+			this.ClientSize = new System.Drawing.Size(1303, 386);
 			this.Controls.Add(this._txtSection);
 			this.Controls.Add(this.label4);
 			this.Controls.Add(this._btnDelete);
@@ -305,10 +255,6 @@ namespace DataBase
 		private System.Windows.Forms.ToolStripMenuItem readerToolStripMenuItem;
 		private System.Windows.Forms.ToolStripMenuItem bookToolStripMenuItem;
 		private System.Windows.Forms.DataGridView dataGridView1;
-		private System.Windows.Forms.DataGridViewTextBoxColumn Column1;
-		private System.Windows.Forms.DataGridViewTextBoxColumn Column2;
-		private System.Windows.Forms.DataGridViewTextBoxColumn Column3;
-		private System.Windows.Forms.DataGridViewTextBoxColumn Column4;
 		private System.Windows.Forms.Button _btnDelete;
 		private System.Windows.Forms.Button _btnInput;
 		private System.Windows.Forms.TextBox _txtDataPublish;
@@ -319,9 +265,9 @@ namespace DataBase
 		private System.Windows.Forms.Label label1;
 		private System.Windows.Forms.TextBox _txtSection;
 		private System.Windows.Forms.Label label4;
-		private System.Windows.Forms.Button _btnAddToBD;
-		private System.Windows.Forms.Button _btnView;
-		private System.Windows.Forms.Button _btnRedactor;
-		private System.Windows.Forms.Button _btnReadFromDB;
+		private System.Windows.Forms.DataGridViewTextBoxColumn Column1;
+		private System.Windows.Forms.DataGridViewTextBoxColumn Column2;
+		private System.Windows.Forms.DataGridViewTextBoxColumn Column3;
+		private System.Windows.Forms.DataGridViewTextBoxColumn Column4;
 	}
 }

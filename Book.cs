@@ -21,8 +21,6 @@ namespace DataBase
 		private static Reader reader;
 		private static Register register;
 
-		private bool _editor = true;
-		private bool _view = false;
 		private DataGridView _copyData = null;
 		public Book()
 		{
@@ -35,6 +33,25 @@ namespace DataBase
 			_copyData.Columns.Add("Column4", "Section");
 
 			this.FormClosing += Book_FormClosing;
+
+			DataGridView d = readDataFromDB();
+			dataGridView1.Rows.Clear();
+			_copyData.Rows.Clear();
+
+			if (d.Rows.Count > 1)
+			{
+				for (int i = 0; i < (d.Rows.Count - 1); i++)
+				{
+					_copyData.Rows.Add(Reader.CloneWithValues(d.Rows[i]));
+				}
+
+				for (int i = 0; i < (d.Rows.Count - 1); i++)
+				{
+					dataGridView1.Rows.Add(Reader.CloneWithValues(d.Rows[i]));
+				}
+			}
+
+			dataGridView1.CellValueChanged += dataGridView1_CellValueChanged;
 		}
 
 		private void Book_FormClosing(object sender, FormClosingEventArgs e)
@@ -93,6 +110,27 @@ namespace DataBase
 			return flag;
 		}
 
+		private bool CheckOrientedData(String reg, String pages, String year, String section)
+		{
+			if ((pages.Length == 0)
+				|| (year.Trim(' ').Length == 0)
+				|| (section.Trim(' ').Length == 0)
+				|| (pages.Length > MAX_SIZE_PAGE)
+				|| (year.Length > MAX_SIZE_YEAR)
+				|| (section.Length > MAX_SIZE_SECTION)
+				|| (!registerNumberValidate(reg)))
+				return false;
+			try
+			{
+				long.Parse(reg);
+				short.Parse(pages);
+				short.Parse(year);
+			}
+			catch (Exception) { return false; }
+
+			return true;
+		}
+
 		public static bool registerNumberValidate(String psw)
 		{
 			if (psw.Length != MAX_SIZE_REGNUM)
@@ -107,7 +145,53 @@ namespace DataBase
 			return flag;
 		}
 
-		public static DataGridView readDataFromDB(bool del = false)
+		private bool addDataToDataBase(String reg, String pages, String year, String section)
+		{
+			if (!CheckOrientedData(reg, pages, year, section))
+			{
+				MessageBox.Show("Ошибка: добавление записи невозможно! Запись содержит не корректные данные!",
+					"Ошибка!",
+					MessageBoxButtons.OK, MessageBoxIcon.Error);
+				return false;
+			}
+
+			using (SqlConnection sqlConnection = new SqlConnection("Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=DataBaseSQL;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False"))
+			{
+				sqlConnection.Open();
+
+				using (SqlCommand sqlCMD = new SqlCommand("dbo.WriteBookData", sqlConnection))
+				{
+					sqlCMD.CommandType = System.Data.CommandType.StoredProcedure;
+
+					SqlParameter valueReturn = new SqlParameter("valueReturn", SqlDbType.Int);
+					valueReturn.Direction = ParameterDirection.ReturnValue;
+
+					sqlCMD.Parameters.Add(valueReturn);
+					sqlCMD.Parameters.AddWithValue("@reg", long.Parse(reg));
+					sqlCMD.Parameters.AddWithValue("@pages", short.Parse(pages));
+					sqlCMD.Parameters.AddWithValue("@year", short.Parse(year));
+					sqlCMD.Parameters.AddWithValue("@section", section);
+					sqlCMD.ExecuteScalar();
+
+					int result = Convert.ToInt32(valueReturn.Value);
+					if (result < 0)
+					{
+						MessageBox.Show("Ошибка: невозможно добавить запись с регистрационным номером " +
+						reg + ", поскольку данный регистрационный номер"
+						+ " уже присутствуют в базе даных!", "Ошибка!",
+						MessageBoxButtons.OK, MessageBoxIcon.Error);
+						sqlConnection.Close();
+						return false;
+					}
+				}
+
+				sqlConnection.Close();
+			}
+
+			return true;
+		}
+
+		public static DataGridView readDataFromDB()
 		{
 			DataGridView data = new DataGridView();
 			data.Columns.Add("Column1", "Register_Number");
@@ -115,16 +199,14 @@ namespace DataBase
 			data.Columns.Add("Column3", "Year_Publish");
 			data.Columns.Add("Column4", "Section");
 
-			using (SqlConnection sqlConnection = new SqlConnection("Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=master;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False"))
+			using (SqlConnection sqlConnection = new SqlConnection("Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=DataBaseSQL;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False"))
 			{
 				sqlConnection.Open();
-				using (SqlCommand cmd = new SqlCommand("USE DataBaseSQL", sqlConnection))
-				{
-					cmd.ExecuteNonQuery();
-				}
 
-				using (SqlCommand command = new SqlCommand("SELECT * FROM dbo.Book", sqlConnection))
+				using (SqlCommand command = new SqlCommand("dbo.ReadBookData", sqlConnection))
 				{
+					command.CommandType = System.Data.CommandType.StoredProcedure;
+
 					SqlDataReader sqlReader = command.ExecuteReader();
 					if (sqlReader.HasRows)
 					{
@@ -142,18 +224,7 @@ namespace DataBase
 					sqlReader.Close();
 				}
 
-				if (del)
-				{
-					using (SqlCommand cmd = new SqlCommand("DELETE FROM dbo.Book;" +
-					" DBCC CHECKIDENT ('dbo.Book', RESEED, 0)", sqlConnection))
-					{
-						try
-						{
-							cmd.ExecuteNonQuery();
-						}
-						catch (Exception) { }
-					}
-				}
+				sqlConnection.Close();
 			}
 
 			return data;
@@ -161,13 +232,6 @@ namespace DataBase
 
 		private void _btnDelete_Click(object sender, EventArgs e)
 		{
-			if (_view)
-			{
-				MessageBox.Show("Ошибка: в режиме просмотра не возможно удалять данные из таблице!", "Ошибка!",
-					MessageBoxButtons.OK, MessageBoxIcon.Error);
-				return;
-			}
-
 			if (dataGridView1.CurrentRow == null)
 			{
 				MessageBox.Show("Ошибка: не выбрана строка для удаления", "Ошибка!",
@@ -175,26 +239,44 @@ namespace DataBase
 				return;
 			}
 
-			try
+			int index = dataGridView1.CurrentRow.Index;
+
+			String reg = dataGridView1.Rows[index].Cells[0].Value.ToString();
+			using (SqlConnection sqlConnection = new SqlConnection("Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=DataBaseSQL;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False"))
 			{
-				dataGridView1.Rows.RemoveAt(dataGridView1.CurrentRow.Index);
+				sqlConnection.Open();
+
+				using (SqlCommand sqlCMD = new SqlCommand("dbo.DeleteBookData", sqlConnection))
+				{
+					sqlCMD.CommandType = System.Data.CommandType.StoredProcedure;
+
+					SqlParameter valueReturn = new SqlParameter("valueReturn", SqlDbType.Int);
+					valueReturn.Direction = ParameterDirection.ReturnValue;
+
+					sqlCMD.Parameters.Add(valueReturn);
+					sqlCMD.Parameters.AddWithValue("@reg", long.Parse(reg));
+					sqlCMD.ExecuteScalar();
+
+					int result = Convert.ToInt32(valueReturn.Value);
+
+					if (result < 0)
+					{
+						MessageBox.Show("Ошибка: невозможно удалить данную запись!" +
+							" Данный регистрационный номер зарегистрирован! Чтобы удалить данную" +
+							" запись необходимо удалить запись с данным регистрационным номером!", "Ошибка!",
+							MessageBoxButtons.OK, MessageBoxIcon.Error);
+						sqlConnection.Close();
+						return;
+					}
+				}
+				sqlConnection.Close();
 			}
-			catch (Exception)
-			{
-				MessageBox.Show("Ошибка: удаление данной строки невозможно!", "Ошибка!",
-					MessageBoxButtons.OK, MessageBoxIcon.Error);
-			}
+			_copyData.Rows.RemoveAt(index);
+			dataGridView1.Rows.RemoveAt(index);
 		}
 
 		private void _btnInput_Click(object sender, EventArgs e)
 		{
-			if (_view)
-			{
-				MessageBox.Show("Ошибка: в режиме просмотра не возможно добавлять данные в таблицу!", "Ошибка!",
-					MessageBoxButtons.OK, MessageBoxIcon.Error);
-				return;
-			}
-
 			if (!Reader.CheckTextBoxes(new List<TextBox> { _txtPasswData, _txtCountPage, _txtDataPublish }))
 			{
 				MessageBox.Show("Ошибка: не все текстовые поля заполнены!", "Ошибка!",
@@ -215,29 +297,15 @@ namespace DataBase
 			_txtDataPublish.Text = _txtDataPublish.Text.Trim(new char[] { ' ' });
 			_txtSection.Text = _txtSection.Text.Trim(new char[] { ' ' });
 
-			for (int i = 0; i < dataGridView1.Rows.Count; i++)
+			if (addDataToDataBase(_txtPasswData.Text, _txtCountPage.Text, _txtDataPublish.Text, _txtSection.Text))
 			{
-				if (dataGridView1.Rows[i].Cells[0].Value == null)
-					break;
-				if (dataGridView1.Rows[i].Cells[0].Value.ToString().Equals(_txtPasswData.Text))
-				{
-					MessageBox.Show("Ошибка: введённый регистрационный номер уже присутствует в таблице!", "Ошибка!",
-					MessageBoxButtons.OK, MessageBoxIcon.Error);
-					return;
-				}
+				_copyData.Rows.Add(_txtPasswData.Text, _txtCountPage.Text, _txtDataPublish.Text, _txtSection.Text);
+				dataGridView1.Rows.Add(_txtPasswData.Text, _txtCountPage.Text, _txtDataPublish.Text, _txtSection.Text);
 			}
-
-			dataGridView1.Rows.Add(_txtPasswData.Text, _txtCountPage.Text, _txtDataPublish.Text, _txtSection.Text);
 		}
 
 		private void _txtPasswData_KeyPress(object sender, KeyPressEventArgs e)
 		{
-			if (_view)
-			{
-				e.Handled = true;
-				return;
-			}
-
 			char number = e.KeyChar;
 
 			if (!Char.IsDigit(number) && (number != 8))
@@ -248,12 +316,6 @@ namespace DataBase
 
 		private void _txtCountPage_KeyPress(object sender, KeyPressEventArgs e)
 		{
-			if (_view)
-			{
-				e.Handled = true;
-				return;
-			}
-
 			char number = e.KeyChar;
 
 			if (!Char.IsDigit(number) && (number != 8))
@@ -264,12 +326,6 @@ namespace DataBase
 
 		private void _txtDataPublish_KeyPress(object sender, KeyPressEventArgs e)
 		{
-			if (_view)
-			{
-				e.Handled = true;
-				return;
-			}
-
 			char number = e.KeyChar;
 
 			if (!Char.IsDigit(number) && (number != 8))
@@ -280,12 +336,6 @@ namespace DataBase
 
 		private void _txtSection_KeyPress(object sender, KeyPressEventArgs e)
 		{
-			if (_view)
-			{
-				e.Handled = true;
-				return;
-			}
-
 			char number = e.KeyChar;
 
 			if ((number != 8) && (_txtSection.Text + number).Length > MAX_SIZE_SECTION)
@@ -304,130 +354,74 @@ namespace DataBase
 			this.Hide();
 		}
 
-		private void _btnAddToBD_Click(object sender, EventArgs e)
+		private void reloadDatabase(bool flag = false)
 		{
-			if (_view)
+			DataGridView d = readDataFromDB();
+			if (d.Rows.Count > 1)
 			{
-				MessageBox.Show("Ошибка: в режиме просмотра не возможно добавлять данные в таблицу!", "Ошибка!",
-					MessageBoxButtons.OK, MessageBoxIcon.Error);
+				dataGridView1.Rows.Clear();
+				_copyData.Rows.Clear();
+				for (int i = 0; i < (d.Rows.Count - 1); i++)
+				{
+					_copyData.Rows.Add(Reader.CloneWithValues(d.Rows[i]));
+					dataGridView1.Rows.Add(Reader.CloneWithValues(d.Rows[i]));
+				}
+			}
+
+			if (flag)
+				dataGridView1.Refresh();
+		}
+
+		private void dataGridView1_CellValueChanged(object sender, DataGridViewCellEventArgs e)
+		{
+			if (dataGridView1.Rows.Count <= 1)
+				return;
+			int index = e.RowIndex;
+			if (index == dataGridView1.Rows.Count)
+				return;
+
+			bool flag = true;
+			for (int i = 0; (i < dataGridView1.Rows[index].Cells.Count) && (flag); i++)
+				if (!(dataGridView1.Rows[index].Cells[i].Value.ToString().Equals(
+					_copyData.Rows[index].Cells[i].Value.ToString())))
+					flag = false;
+			if (flag)
+				return;
+
+			if ((!Reader.checkRow(dataGridView1.Rows[index])) || (!CheckOrientedData(
+				dataGridView1.Rows[index].Cells[0].Value.ToString(),
+				dataGridView1.Rows[index].Cells[1].Value.ToString(),
+				dataGridView1.Rows[index].Cells[2].Value.ToString(),
+				dataGridView1.Rows[index].Cells[3].Value.ToString())))
+			{
+				reloadDatabase(true);
+				MessageBox.Show("Ошибка: введены не корректные параметры! Изменение данных не возможно осуществить!", "Ошибка!",
+							MessageBoxButtons.OK, MessageBoxIcon.Error);
 				return;
 			}
 
-			if (!CheckData())
-			{
-				MessageBox.Show("Ошибка: добавление строк невозможно, так как в таблице содержаться" +
-					" не корректные данные", "Ошибка!",
-					MessageBoxButtons.OK, MessageBoxIcon.Error);
-				return;
-			}
-
-			using (SqlConnection sqlConnection = new SqlConnection("Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=master;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False"))
+			using (SqlConnection sqlConnection = new SqlConnection("Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=DataBaseSQL;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False"))
 			{
 				sqlConnection.Open();
-				using (SqlCommand cmd = new SqlCommand("USE DataBaseSQL", sqlConnection))
+
+				using (SqlCommand sqlCMD = new SqlCommand("dbo.UpdateBookData", sqlConnection))
 				{
-					cmd.ExecuteNonQuery();
+					sqlCMD.CommandType = System.Data.CommandType.StoredProcedure;
+
+					sqlCMD.Parameters.AddWithValue("@reg", long.Parse(dataGridView1.Rows[index].Cells[0].Value.ToString()));
+					sqlCMD.Parameters.AddWithValue("@newPages", short.Parse(dataGridView1.Rows[index].Cells[1].Value.ToString()));
+					sqlCMD.Parameters.AddWithValue("@newYear", short.Parse(dataGridView1.Rows[index].Cells[2].Value.ToString()));
+					sqlCMD.Parameters.AddWithValue("@newSection", dataGridView1.Rows[index].Cells[3].Value.ToString());
+					sqlCMD.ExecuteNonQuery();
 				}
 
-				for (int i = 0; i < (dataGridView1.Rows.Count - 1); i++)
-				{
-					using (SqlCommand sqlCMD = new SqlCommand("SET IDENTITY_INSERT dbo.Book ON; INSERT INTO dbo.Book (Register_Number, Count_Pages, Year_Publishing, Section) VALUES (@reg, @pages, @year, @section);" +
-						"SET IDENTITY_INSERT dbo.Reader OFF;", sqlConnection))
-					{
-						try
-						{
-							sqlCMD.Parameters.AddWithValue("@reg", long.Parse(dataGridView1.Rows[i].Cells[0].Value.ToString()));
-							sqlCMD.Parameters.AddWithValue("@pages", long.Parse(dataGridView1.Rows[i].Cells[1].Value.ToString()));
-							sqlCMD.Parameters.AddWithValue("@year", short.Parse(dataGridView1.Rows[i].Cells[2].Value.ToString()));
-							sqlCMD.Parameters.AddWithValue("@section", dataGridView1.Rows[i].Cells[3].Value.ToString());
-							sqlCMD.ExecuteNonQuery();
-						}
-						catch (Exception)
-						{
-							/*MessageBox.Show("Ошибка: невозможно добавить запись с регистрационным номером " +
-							dataGridView1.Rows[i].Cells[0].Value.ToString() + ", поскольку данный регистрационный номер"
-							+ " уже присутствуют в базе даных!", "Ошибка!",
-								MessageBoxButtons.OK, MessageBoxIcon.Error);*/
-						}
-					}
-				}
+				sqlConnection.Close();
 			}
 
-			dataGridView1.Rows.Clear();
-			MessageBox.Show("Записи добавлены!", "Информация",
-					MessageBoxButtons.OK, MessageBoxIcon.Information);
-		}
-
-		private void _btnReadFromDB_Click(object sender, EventArgs e)
-		{
-			if (_view)
-			{
-				MessageBox.Show("Ошибка: в режиме просмотра не возможно считать данные из таблицы!", "Ошибка!",
-					MessageBoxButtons.OK, MessageBoxIcon.Error);
-				return;
-			}
-
-			DataGridView d = readDataFromDB(true);
-			if ((d.Rows.Count - 1) <= 0)
-			{
-				MessageBox.Show("Ошибка: в базе данных нет записей!", "Ошибка!",
-					   MessageBoxButtons.OK, MessageBoxIcon.Error);
-				return;
-			}
-
-			dataGridView1.Rows.Clear();
-			for (int i = 0; i < (d.Rows.Count - 1); i++)
-				dataGridView1.Rows.Add(Reader.CloneWithValues(d.Rows[i]));
-
-			MessageBox.Show("Все данные считаны!", "Информация",
-					MessageBoxButtons.OK, MessageBoxIcon.Information);
-		}
-
-		private void _btnView_Click(object sender, EventArgs e)
-		{
-			if (_view)
-			{
-				MessageBox.Show("Вы уже находитесь в режиме просмотра", "Информация",
-						MessageBoxButtons.OK, MessageBoxIcon.Information);
-				return;
-			}
-			_editor = false;
-			_view = true;
-			_copyData.Rows.Clear();
-			for (int i = 0; i < (dataGridView1.Rows.Count - 1); i++)
-				_copyData.Rows.Add(Reader.CloneWithValues(dataGridView1.Rows[i]));
-
-			DataGridView d = readDataFromDB();
-			if ((d.Rows.Count - 1) <= 0)
-			{
-				MessageBox.Show("Ошибка: в базе данных нет записей!", "Ошибка!",
-					   MessageBoxButtons.OK, MessageBoxIcon.Error);
-				return;
-			}
-
-			dataGridView1.Rows.Clear();
-			for (int i = 0; i < (d.Rows.Count - 1); i++)
-				dataGridView1.Rows.Add(Reader.CloneWithValues(d.Rows[i]));
-
-			MessageBox.Show("Данные для режима просмотра считаны!", "Информация",
-					MessageBoxButtons.OK, MessageBoxIcon.Information);
-		}
-
-		private void _btnRedactor_Click(object sender, EventArgs e)
-		{
-			if (_editor)
-			{
-				MessageBox.Show("Вы уже находитесь в режиме редактора", "Информация",
-						MessageBoxButtons.OK, MessageBoxIcon.Information);
-				return;
-			}
-			_editor = true;
-			_view = false;
-
-			dataGridView1.Rows.Clear();
-			for (int i = 0; i < (_copyData.Rows.Count - 1); i++)
-				dataGridView1.Rows.Add(Reader.CloneWithValues(_copyData.Rows[i]));
-			_copyData.Rows.Clear();
+			dataGridView1.Refresh();
+			DataGridViewRow row = Reader.CloneWithValues(dataGridView1.Rows[index]);
+			for (int i = 0; i < row.Cells.Count; i++)
+				_copyData.Rows[index].Cells[i].Value = row.Cells[i].Clone();
 		}
 	}
 }

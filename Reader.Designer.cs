@@ -30,9 +30,6 @@ namespace DataBase
 		private void InitializeComponent()
 		{
 			this.dataGridView1 = new System.Windows.Forms.DataGridView();
-			this.Column1 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-			this.Column2 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-			this.Column3 = new System.Windows.Forms.DataGridViewTextBoxColumn();
 			this.menuStrip1 = new System.Windows.Forms.MenuStrip();
 			this.readerToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.bookToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -44,16 +41,16 @@ namespace DataBase
 			this._txtFIO = new System.Windows.Forms.TextBox();
 			this._btnInput = new System.Windows.Forms.Button();
 			this._btnDelete = new System.Windows.Forms.Button();
-			this._btnAddToBD = new System.Windows.Forms.Button();
-			this._btnReadFromDB = new System.Windows.Forms.Button();
-			this._btnRedactor = new System.Windows.Forms.Button();
-			this._btnView = new System.Windows.Forms.Button();
+			this.Column1 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+			this.Column2 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+			this.Column3 = new System.Windows.Forms.DataGridViewTextBoxColumn();
 			((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
 			this.menuStrip1.SuspendLayout();
 			this.SuspendLayout();
 			// 
 			// dataGridView1
 			// 
+			this.dataGridView1.AllowUserToAddRows = false;
 			this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
 			this.dataGridView1.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.Column1,
@@ -67,27 +64,6 @@ namespace DataBase
 			this.dataGridView1.TabIndex = 0;
 			this.dataGridView1.RowPrePaint += new System.Windows.Forms.DataGridViewRowPrePaintEventHandler(this.dbPrePaint);
 			// 
-			// Column1
-			// 
-			this.Column1.HeaderText = "Паспортные данные";
-			this.Column1.MinimumWidth = 6;
-			this.Column1.Name = "Column1";
-			this.Column1.Width = 125;
-			// 
-			// Column2
-			// 
-			this.Column2.HeaderText = "Домашний адрес";
-			this.Column2.MinimumWidth = 6;
-			this.Column2.Name = "Column2";
-			this.Column2.Width = 125;
-			// 
-			// Column3
-			// 
-			this.Column3.HeaderText = "ФИО";
-			this.Column3.MinimumWidth = 6;
-			this.Column3.Name = "Column3";
-			this.Column3.Width = 125;
-			// 
 			// menuStrip1
 			// 
 			this.menuStrip1.ImageScalingSize = new System.Drawing.Size(20, 20);
@@ -96,7 +72,7 @@ namespace DataBase
             this.bookToolStripMenuItem});
 			this.menuStrip1.Location = new System.Drawing.Point(0, 0);
 			this.menuStrip1.Name = "menuStrip1";
-			this.menuStrip1.Size = new System.Drawing.Size(1111, 28);
+			this.menuStrip1.Size = new System.Drawing.Size(1111, 30);
 			this.menuStrip1.TabIndex = 1;
 			this.menuStrip1.Text = "menuStrip1";
 			// 
@@ -160,7 +136,6 @@ namespace DataBase
 			this._txtHomeAddress.Size = new System.Drawing.Size(202, 22);
 			this._txtHomeAddress.TabIndex = 6;
 			this._txtHomeAddress.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
-			this._txtHomeAddress.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this._txtHomeAddress_KeyPress);
 			// 
 			// _txtFIO
 			// 
@@ -169,7 +144,6 @@ namespace DataBase
 			this._txtFIO.Size = new System.Drawing.Size(202, 22);
 			this._txtFIO.TabIndex = 7;
 			this._txtFIO.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
-			this._txtFIO.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this._txtFIO_KeyPress);
 			// 
 			// _btnInput
 			// 
@@ -193,59 +167,33 @@ namespace DataBase
 			this._btnDelete.UseVisualStyleBackColor = true;
 			this._btnDelete.Click += new System.EventHandler(this._btnDelete_Click);
 			// 
-			// _btnAddToBD
+			// Column1
 			// 
-			this._btnAddToBD.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
-			this._btnAddToBD.Location = new System.Drawing.Point(16, 219);
-			this._btnAddToBD.Name = "_btnAddToBD";
-			this._btnAddToBD.Size = new System.Drawing.Size(391, 48);
-			this._btnAddToBD.TabIndex = 10;
-			this._btnAddToBD.Text = "Добавить в базу данных";
-			this._btnAddToBD.UseVisualStyleBackColor = true;
-			this._btnAddToBD.Click += new System.EventHandler(this._btnAddToBD_Click);
+			this.Column1.HeaderText = "Паспортные данные";
+			this.Column1.MinimumWidth = 6;
+			this.Column1.Name = "Column1";
+			this.Column1.ReadOnly = true;
+			this.Column1.Width = 125;
 			// 
-			// _btnReadFromDB
+			// Column2
 			// 
-			this._btnReadFromDB.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
-			this._btnReadFromDB.Location = new System.Drawing.Point(16, 284);
-			this._btnReadFromDB.Name = "_btnReadFromDB";
-			this._btnReadFromDB.Size = new System.Drawing.Size(391, 48);
-			this._btnReadFromDB.TabIndex = 11;
-			this._btnReadFromDB.Text = "Считать из базы данных";
-			this._btnReadFromDB.UseVisualStyleBackColor = true;
-			this._btnReadFromDB.Click += new System.EventHandler(this._btnReadFromDB_Click);
+			this.Column2.HeaderText = "Домашний адрес";
+			this.Column2.MinimumWidth = 6;
+			this.Column2.Name = "Column2";
+			this.Column2.Width = 125;
 			// 
-			// _btnRedactor
+			// Column3
 			// 
-			this._btnRedactor.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
-			this._btnRedactor.Location = new System.Drawing.Point(488, 354);
-			this._btnRedactor.Name = "_btnRedactor";
-			this._btnRedactor.Size = new System.Drawing.Size(226, 39);
-			this._btnRedactor.TabIndex = 12;
-			this._btnRedactor.Text = "Режим редактирования";
-			this._btnRedactor.UseVisualStyleBackColor = true;
-			this._btnRedactor.Click += new System.EventHandler(this._btnRedactor_Click);
-			// 
-			// _btnView
-			// 
-			this._btnView.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
-			this._btnView.Location = new System.Drawing.Point(857, 354);
-			this._btnView.Name = "_btnView";
-			this._btnView.Size = new System.Drawing.Size(226, 39);
-			this._btnView.TabIndex = 13;
-			this._btnView.Text = "Режим просмотра";
-			this._btnView.UseVisualStyleBackColor = true;
-			this._btnView.Click += new System.EventHandler(this._btnView_Click);
+			this.Column3.HeaderText = "ФИО";
+			this.Column3.MinimumWidth = 6;
+			this.Column3.Name = "Column3";
+			this.Column3.Width = 125;
 			// 
 			// Reader
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(1111, 412);
-			this.Controls.Add(this._btnView);
-			this.Controls.Add(this._btnRedactor);
-			this.Controls.Add(this._btnReadFromDB);
-			this.Controls.Add(this._btnAddToBD);
+			this.ClientSize = new System.Drawing.Size(1111, 377);
 			this.Controls.Add(this._btnDelete);
 			this.Controls.Add(this._btnInput);
 			this.Controls.Add(this._txtFIO);
@@ -271,9 +219,6 @@ namespace DataBase
 		#endregion
 
 		private System.Windows.Forms.DataGridView dataGridView1;
-		private System.Windows.Forms.DataGridViewTextBoxColumn Column1;
-		private System.Windows.Forms.DataGridViewTextBoxColumn Column2;
-		private System.Windows.Forms.DataGridViewTextBoxColumn Column3;
 		private System.Windows.Forms.MenuStrip menuStrip1;
 		private System.Windows.Forms.ToolStripMenuItem readerToolStripMenuItem;
 		private System.Windows.Forms.ToolStripMenuItem bookToolStripMenuItem;
@@ -285,10 +230,9 @@ namespace DataBase
 		private System.Windows.Forms.TextBox _txtFIO;
 		private System.Windows.Forms.Button _btnInput;
 		private System.Windows.Forms.Button _btnDelete;
-		private System.Windows.Forms.Button _btnAddToBD;
-		private System.Windows.Forms.Button _btnReadFromDB;
-		private System.Windows.Forms.Button _btnRedactor;
-		private System.Windows.Forms.Button _btnView;
+		private System.Windows.Forms.DataGridViewTextBoxColumn Column1;
+		private System.Windows.Forms.DataGridViewTextBoxColumn Column2;
+		private System.Windows.Forms.DataGridViewTextBoxColumn Column3;
 	}
 }
 

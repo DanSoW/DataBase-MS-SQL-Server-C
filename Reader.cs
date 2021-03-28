@@ -20,8 +20,6 @@ namespace DataBase
 		private static Book book;
 		private static Register register;
 
-		private bool _editor = true;
-		private bool _view = false;
 		private DataGridView _copyData = null;
 
 		public Reader()
@@ -41,6 +39,25 @@ namespace DataBase
 			_copyData.Columns.Add("Column1", "Password_Data");
 			_copyData.Columns.Add("Column2", "Home_Address");
 			_copyData.Columns.Add("Column3", "FIO");
+
+			DataGridView d = readDataFromDB();
+			dataGridView1.Rows.Clear();
+			_copyData.Rows.Clear();
+
+			if (d.Rows.Count > 1)
+			{
+				for (int i = 0; i < (d.Rows.Count - 1); i++)
+				{
+					_copyData.Rows.Add(CloneWithValues(d.Rows[i]));
+				}
+
+				for (int i = 0; i < (d.Rows.Count - 1); i++)
+				{
+					dataGridView1.Rows.Add(CloneWithValues(d.Rows[i]));
+				}
+			}
+
+			dataGridView1.CellValueChanged += dataGridView1_CellValueChanged;
 		}
 
 		private void dbPrePaint(object sender, DataGridViewRowPrePaintEventArgs e)
@@ -82,6 +99,25 @@ namespace DataBase
 			return flag;
 		}
 
+		private bool CheckOrientedData(String pass, String home, String fio)
+		{
+			if ((home.Length == 0)
+				|| (fio.Length == 0)
+				|| (home.Trim(' ').Length == 0)
+				|| (fio.Trim(' ').Length == 0)
+				|| (home.Length > MAX_SIZE_HOMEADR)
+				|| (fio.Length > MAX_SIZE_FIO)
+				|| (!passwordDataValidate(pass)))
+				return false;
+			try
+			{
+				long.Parse(pass);
+			}
+			catch (Exception) { return false; }
+
+			return true;
+		}
+
 		public static bool CheckTextBoxes(List<TextBox> txb)
 		{
 			if (txb.Count == 0)
@@ -113,13 +149,6 @@ namespace DataBase
 
 		private void _btnInput_Click(object sender, EventArgs e)
 		{
-			if (_view)
-			{
-				MessageBox.Show("Ошибка: в режиме просмотра не возможно добавлять данные в таблицу!", "Ошибка!",
-					MessageBoxButtons.OK, MessageBoxIcon.Error);
-				return;
-			}
-
 			if (!CheckTextBoxes(new List<TextBox> { _txtPasswData, _txtHomeAddress, _txtFIO}))
 			{
 				MessageBox.Show("Ошибка: не все текстовые поля заполнены!", "Ошибка!",
@@ -139,29 +168,61 @@ namespace DataBase
 			_txtHomeAddress.Text = _txtHomeAddress.Text.Trim(new char[] { ' ' });
 			_txtFIO.Text = _txtFIO.Text.Trim(new char[] { ' ' });
 
-			for(int i = 0; i < dataGridView1.Rows.Count; i++)
+			if(addDataToDataBase(_txtPasswData.Text, _txtHomeAddress.Text, _txtFIO.Text))
 			{
-				if (dataGridView1.Rows[i].Cells[0].Value == null)
-					break;
-				if (dataGridView1.Rows[i].Cells[0].Value.ToString().Equals(_txtPasswData.Text))
-				{
-					MessageBox.Show("Ошибка: введённые паспортные данные уже присутствуют в таблице!", "Ошибка!",
+				_copyData.Rows.Add(_txtPasswData.Text, _txtHomeAddress.Text, _txtFIO.Text);
+				dataGridView1.Rows.Add(_txtPasswData.Text, _txtHomeAddress.Text, _txtFIO.Text);
+			}
+		}
+
+		private bool addDataToDataBase(String pwd, String home, String fname)
+		{
+			if(!CheckOrientedData(pwd, home, fname))
+			{
+				MessageBox.Show("Ошибка: добавление записи невозможно! Запись содержит не корректные данные!",
+					"Ошибка!",
 					MessageBoxButtons.OK, MessageBoxIcon.Error);
-					return;
-				}
+				return false;
 			}
 
-			dataGridView1.Rows.Add(_txtPasswData.Text, _txtHomeAddress.Text, _txtFIO.Text);
+			using (SqlConnection sqlConnection = new SqlConnection("Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=DataBaseSQL;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False"))
+			{
+				sqlConnection.Open();
+
+				using (SqlCommand sqlCMD = new SqlCommand("dbo.WriteReaderData", sqlConnection))
+				{
+					sqlCMD.CommandType = System.Data.CommandType.StoredProcedure;
+
+					SqlParameter valueReturn = new SqlParameter("valueReturn", SqlDbType.Int);
+					valueReturn.Direction = ParameterDirection.ReturnValue;
+
+					sqlCMD.Parameters.Add(valueReturn);
+					sqlCMD.Parameters.AddWithValue("@pwd", long.Parse(pwd));
+					sqlCMD.Parameters.AddWithValue("@home", home);
+					sqlCMD.Parameters.AddWithValue("@fname", fname);
+					sqlCMD.ExecuteScalar();
+
+					int result = Convert.ToInt32(valueReturn.Value);
+
+					if (result < 0)
+					{
+						MessageBox.Show("Ошибка: невозможно добавить запись с паспортными данными " +
+						pwd + ", поскольку данные паспортные данные"
+						+ " уже присутствуют в базе даных!", "Ошибка!",
+						MessageBoxButtons.OK, MessageBoxIcon.Error);
+						sqlConnection.Close();
+						return false;
+					}
+				}
+
+				sqlConnection.Close();
+			}
+
+			return true;
 		}
 
 		private void _txtPasswData_KeyPress(object sender, KeyPressEventArgs e)
 		{
-			if (_view)
-			{
-				e.Handled = true;
-				return;
-			}
-
 			char number = e.KeyChar;
 
 			if (!Char.IsDigit(number) && (number != 8))
@@ -172,13 +233,6 @@ namespace DataBase
 
 		private void _btnDelete_Click(object sender, EventArgs e)
 		{
-			if (_view)
-			{
-				MessageBox.Show("Ошибка: в режиме просмотра не возможно удалять данные из таблице!", "Ошибка!",
-					MessageBoxButtons.OK, MessageBoxIcon.Error);
-				return;
-			}
-
 			if (dataGridView1.CurrentRow == null)
 			{
 				MessageBox.Show("Ошибка: не выбрана строка для удаления", "Ошибка!",
@@ -186,14 +240,39 @@ namespace DataBase
 				return;
 			}
 
-			try
+			int index = dataGridView1.CurrentRow.Index;
+			String pwd = dataGridView1.Rows[index].Cells[0].Value.ToString();
+			using (SqlConnection sqlConnection = new SqlConnection("Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=DataBaseSQL;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False"))
 			{
-				dataGridView1.Rows.RemoveAt(dataGridView1.CurrentRow.Index);
+				sqlConnection.Open();
+
+				using (SqlCommand sqlCMD = new SqlCommand("dbo.DeleteReaderData", sqlConnection))
+				{
+					sqlCMD.CommandType = System.Data.CommandType.StoredProcedure;
+
+					SqlParameter valueReturn = new SqlParameter("valueReturn", SqlDbType.Int);
+					valueReturn.Direction = ParameterDirection.ReturnValue;
+
+					sqlCMD.Parameters.Add(valueReturn);
+					sqlCMD.Parameters.AddWithValue("@pwd", long.Parse(pwd));
+					sqlCMD.ExecuteScalar();
+
+					int result = Convert.ToInt32(valueReturn.Value);
+
+					if (result < 0)
+					{
+						MessageBox.Show("Ошибка: невозможно удалить данную запись!" +
+							" Данные паспортные данные зарегистрированы! Чтобы удалить данную" +
+							" запись необходимо удалить запись с данными паспортными данными!", "Ошибка!",
+							MessageBoxButtons.OK, MessageBoxIcon.Error);
+						sqlConnection.Close();
+						return;
+					}
+				}
+				sqlConnection.Close();
 			}
-			catch (Exception) {
-				MessageBox.Show("Ошибка: удаление данной строки невозможно!", "Ошибка!",
-					MessageBoxButtons.OK, MessageBoxIcon.Error);
-			}
+			_copyData.Rows.RemoveAt(index);
+			dataGridView1.Rows.RemoveAt(index);
 		}
 
 		private void readerToolStripMenuItem_Click(object sender, EventArgs e)
@@ -208,101 +287,6 @@ namespace DataBase
 			this.Hide();
 		}
 
-		private void _btnAddToBD_Click(object sender, EventArgs e)
-		{
-			if (_view)
-			{
-				MessageBox.Show("Ошибка: в режиме просмотра не возможно добавлять данные в таблицу!", "Ошибка!",
-					MessageBoxButtons.OK, MessageBoxIcon.Error);
-				return;
-			}
-
-			if (!CheckData())
-			{
-				MessageBox.Show("Ошибка: добавление строк невозможно, так как в таблице содержаться" +
-					" не корректные данные", "Ошибка!",
-					MessageBoxButtons.OK, MessageBoxIcon.Error);
-				return;
-			}
-
-			using(SqlConnection sqlConnection = new SqlConnection("Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=master;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False"))
-			{
-				sqlConnection.Open();
-				using(SqlCommand cmd = new SqlCommand("USE DataBaseSQL", sqlConnection))
-				{
-					cmd.ExecuteNonQuery();
-				}
-
-				for (int i = 0; i < (dataGridView1.Rows.Count-1); i++)
-				{
-					using (SqlCommand sqlCMD = new SqlCommand("SET IDENTITY_INSERT dbo.Reader ON; INSERT INTO dbo.Reader (Password_Data, Home_Address, Full_Name) VALUES (@pwd, @home, @fname);" +
-						"SET IDENTITY_INSERT dbo.Reader OFF;", sqlConnection))
-					{
-						try
-						{
-							sqlCMD.Parameters.AddWithValue("@pwd", long.Parse(dataGridView1.Rows[i].Cells[0].Value.ToString()));
-							sqlCMD.Parameters.AddWithValue("@home", dataGridView1.Rows[i].Cells[1].Value.ToString());
-							sqlCMD.Parameters.AddWithValue("@fname", dataGridView1.Rows[i].Cells[2].Value.ToString());
-							sqlCMD.ExecuteNonQuery();
-						}
-						catch (Exception)
-						{
-							/*MessageBox.Show("Ошибка: невозможно добавить запись с паспортными данными " +
-							dataGridView1.Rows[i].Cells[0].Value.ToString() + ", поскольку данные паспортные данные"
-							+ " уже присутствуют в базе даных!", "Ошибка!",
-								MessageBoxButtons.OK, MessageBoxIcon.Error);*/
-						}
-					}
-				}
-			}
-
-			dataGridView1.Rows.Clear();
-			MessageBox.Show("Записи добавлены!", "Информация",
-					MessageBoxButtons.OK, MessageBoxIcon.Information);
-		}
-
-		private void _btnReadFromDB_Click(object sender, EventArgs e)
-		{
-			if (_view)
-			{
-				MessageBox.Show("Ошибка: в режиме просмотра не возможно считать данные из таблицы!", "Ошибка!",
-					MessageBoxButtons.OK, MessageBoxIcon.Error);
-				return;
-			}
-
-			DataGridView d = readDataFromDB(true);
-			if((d.Rows.Count-1) <= 0)
-			{
-				MessageBox.Show("Ошибка: в базе данных нет записей!", "Ошибка!",
-					   MessageBoxButtons.OK, MessageBoxIcon.Error);
-				return;
-			}
-
-			dataGridView1.Rows.Clear();
-			for (int i = 0; i < (d.Rows.Count - 1); i++)
-				dataGridView1.Rows.Add(CloneWithValues(d.Rows[i]));
-
-			MessageBox.Show("Все данные считаны!", "Информация",
-					MessageBoxButtons.OK, MessageBoxIcon.Information);
-		}
-
-		private void _btnRedactor_Click(object sender, EventArgs e)
-		{
-			if (_editor)
-			{
-				MessageBox.Show("Вы уже находитесь в режиме редактора", "Информация",
-						MessageBoxButtons.OK, MessageBoxIcon.Information);
-				return;
-			}
-			_editor = true;
-			_view = false;
-
-			dataGridView1.Rows.Clear();
-			for (int i = 0; i < (_copyData.Rows.Count-1); i++)
-				dataGridView1.Rows.Add(CloneWithValues(_copyData.Rows[i]));
-			_copyData.Rows.Clear();
-		}
-
 		public static DataGridViewRow CloneWithValues(DataGridViewRow row)
 		{
 			DataGridViewRow clonedRow = (DataGridViewRow)row.Clone();
@@ -313,70 +297,19 @@ namespace DataBase
 			return clonedRow;
 		}
 
-		private void _btnView_Click(object sender, EventArgs e)
-		{
-			if (_view)
-			{
-				MessageBox.Show("Вы уже находитесь в режиме просмотра", "Информация",
-						MessageBoxButtons.OK, MessageBoxIcon.Information);
-				return;
-			}
-			_editor = false;
-			_view = true;
-			_copyData.Rows.Clear();
-			for (int i = 0; i < (dataGridView1.Rows.Count-1); i++)
-				_copyData.Rows.Add(CloneWithValues(dataGridView1.Rows[i]));
-
-			DataGridView d = readDataFromDB();
-			if ((d.Rows.Count - 1) <= 0)
-			{
-				MessageBox.Show("Ошибка: в базе данных нет записей!", "Ошибка!",
-					   MessageBoxButtons.OK, MessageBoxIcon.Error);
-				return;
-			}
-
-			dataGridView1.Rows.Clear();
-			for (int i = 0; i < (d.Rows.Count - 1); i++)
-				dataGridView1.Rows.Add(CloneWithValues(d.Rows[i]));
-
-			MessageBox.Show("Данные для режима просмотра считаны!", "Информация",
-					MessageBoxButtons.OK, MessageBoxIcon.Information);
-		}
-
-		private void _txtFIO_KeyPress(object sender, KeyPressEventArgs e)
-		{
-			if (_view)
-			{
-				e.Handled = true;
-				return;
-			}
-		}
-
-		private void _txtHomeAddress_KeyPress(object sender, KeyPressEventArgs e)
-		{
-			if (_view)
-			{
-				e.Handled = true;
-				return;
-			}
-		}
-
-		public static DataGridView readDataFromDB(bool del = false)
+		public static DataGridView readDataFromDB()
 		{
 			DataGridView data = new DataGridView();
 			data.Columns.Add("Column1", "Password_Data");
 			data.Columns.Add("Column2", "Home_Address");
 			data.Columns.Add("Column3", "FIO");
-			using (SqlConnection sqlConnection = new SqlConnection("Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=master;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False"))
+			using (SqlConnection sqlConnection = new SqlConnection("Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=DataBaseSQL;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False"))
 			{
 				sqlConnection.Open();
-				using (SqlCommand cmd = new SqlCommand("USE DataBaseSQL", sqlConnection))
-				{
-					cmd.ExecuteNonQuery();
-				}
 
-				using (SqlCommand command = new SqlCommand("SELECT * FROM dbo.Reader", sqlConnection))
+				using (SqlCommand command = new SqlCommand("dbo.ReadReaderData", sqlConnection))
 				{
+					command.CommandType = System.Data.CommandType.StoredProcedure;
 					SqlDataReader sqlReader = command.ExecuteReader();
 					if (sqlReader.HasRows)
 					{
@@ -393,21 +326,85 @@ namespace DataBase
 					sqlReader.Close();
 				}
 
-				if (del)
-				{
-					using (SqlCommand cmd = new SqlCommand("DELETE FROM dbo.Reader;" +
-					" DBCC CHECKIDENT ('dbo.Reader', RESEED, 0)", sqlConnection))
-					{
-						try
-						{
-							cmd.ExecuteNonQuery();
-						}
-						catch (Exception) { }
-					}
-				}
+				sqlConnection.Close();
 			}
 
 			return data;
+		}
+
+		public static bool checkRow(DataGridViewRow row)
+		{
+			for (int i = 0; i < row.Cells.Count; i++)
+				if (row.Cells[i].Value == null)
+					return false;
+			return true;
+		}
+
+		private void reloadDatabase(bool flag = false)
+		{
+			DataGridView d = readDataFromDB();
+			if (d.Rows.Count > 1)
+			{
+				dataGridView1.Rows.Clear();
+				_copyData.Rows.Clear();
+				for (int i = 0; i < (d.Rows.Count - 1); i++)
+				{
+					_copyData.Rows.Add(Reader.CloneWithValues(d.Rows[i]));
+					dataGridView1.Rows.Add(Reader.CloneWithValues(d.Rows[i]));
+				}
+			}
+
+			if (flag)
+				dataGridView1.Refresh();
+		}
+
+		private void dataGridView1_CellValueChanged(object sender, DataGridViewCellEventArgs e)
+		{
+			if (dataGridView1.Rows.Count <= 1)
+				return;
+			int index = e.RowIndex;
+			if (index == dataGridView1.Rows.Count)
+				return;
+
+			bool flag = true;
+			for (int i = 0; (i < dataGridView1.Rows[index].Cells.Count) && (flag); i++)
+				if (!(dataGridView1.Rows[index].Cells[i].Value.ToString().Equals(
+					_copyData.Rows[index].Cells[i].Value.ToString())))
+					flag = false;
+			if (flag)
+				return;
+
+			if ((!checkRow(dataGridView1.Rows[index])) || (!CheckOrientedData(
+				dataGridView1.Rows[index].Cells[0].Value.ToString(),
+				dataGridView1.Rows[index].Cells[1].Value.ToString(),
+				dataGridView1.Rows[index].Cells[2].Value.ToString())))
+			{
+				reloadDatabase(true);
+				MessageBox.Show("Ошибка: введены не корректные параметры! Изменение данных не возможно осуществить!", "Ошибка!",
+							MessageBoxButtons.OK, MessageBoxIcon.Error);
+				return;
+			}
+
+			using (SqlConnection sqlConnection = new SqlConnection("Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=DataBaseSQL;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False"))
+			{
+				sqlConnection.Open();
+
+				using (SqlCommand sqlCMD = new SqlCommand("dbo.UpdateReaderData", sqlConnection))
+				{
+					sqlCMD.CommandType = System.Data.CommandType.StoredProcedure;
+					sqlCMD.Parameters.AddWithValue("@pwd", long.Parse(dataGridView1.Rows[index].Cells[0].Value.ToString()));
+					sqlCMD.Parameters.AddWithValue("@newHome", dataGridView1.Rows[index].Cells[1].Value.ToString());
+					sqlCMD.Parameters.AddWithValue("@newFName", dataGridView1.Rows[index].Cells[2].Value.ToString());
+					sqlCMD.ExecuteNonQuery();
+				}
+
+				sqlConnection.Close();
+			}
+
+			dataGridView1.Refresh();
+			DataGridViewRow row = Reader.CloneWithValues(dataGridView1.Rows[index]);
+			for (int i = 0; i < row.Cells.Count; i++)
+				_copyData.Rows[index].Cells[i].Value = row.Cells[i].Clone();
 		}
 	}
 }

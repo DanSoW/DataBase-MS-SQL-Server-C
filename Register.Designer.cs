@@ -33,11 +33,6 @@ namespace DataBase
 			this.readerToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.bookToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.dataGridView1 = new System.Windows.Forms.DataGridView();
-			this.Column1 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-			this.Column2 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-			this.Column3 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-			this.Column4 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-			this._btnAddToBD = new System.Windows.Forms.Button();
 			this._txtDataReturn = new System.Windows.Forms.TextBox();
 			this.label4 = new System.Windows.Forms.Label();
 			this._btnDelete = new System.Windows.Forms.Button();
@@ -48,9 +43,6 @@ namespace DataBase
 			this.label3 = new System.Windows.Forms.Label();
 			this.label2 = new System.Windows.Forms.Label();
 			this.label1 = new System.Windows.Forms.Label();
-			this._btnReadFromDB = new System.Windows.Forms.Button();
-			this._btnView = new System.Windows.Forms.Button();
-			this._btnRedactor = new System.Windows.Forms.Button();
 			this.dataGridView2 = new System.Windows.Forms.DataGridView();
 			this.Column5 = new System.Windows.Forms.DataGridViewTextBoxColumn();
 			this.Column6 = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -66,6 +58,10 @@ namespace DataBase
 			this._txtInputE2 = new System.Windows.Forms.TextBox();
 			this._btnExecute2 = new System.Windows.Forms.Button();
 			this.richTextBox1 = new System.Windows.Forms.RichTextBox();
+			this.Column1 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+			this.Column2 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+			this.Column3 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+			this.Column4 = new System.Windows.Forms.DataGridViewTextBoxColumn();
 			this.menuStrip1.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.dataGridView2)).BeginInit();
@@ -79,7 +75,7 @@ namespace DataBase
             this.bookToolStripMenuItem});
 			this.menuStrip1.Location = new System.Drawing.Point(0, 0);
 			this.menuStrip1.Name = "menuStrip1";
-			this.menuStrip1.Size = new System.Drawing.Size(1501, 28);
+			this.menuStrip1.Size = new System.Drawing.Size(1501, 30);
 			this.menuStrip1.TabIndex = 0;
 			this.menuStrip1.Text = "menuStrip1";
 			// 
@@ -99,6 +95,7 @@ namespace DataBase
 			// 
 			// dataGridView1
 			// 
+			this.dataGridView1.AllowUserToAddRows = false;
 			this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
 			this.dataGridView1.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.Column1,
@@ -112,45 +109,6 @@ namespace DataBase
 			this.dataGridView1.Size = new System.Drawing.Size(734, 292);
 			this.dataGridView1.TabIndex = 1;
 			this.dataGridView1.RowPrePaint += new System.Windows.Forms.DataGridViewRowPrePaintEventHandler(this.dbPrePaint);
-			// 
-			// Column1
-			// 
-			this.Column1.HeaderText = "Регистрационный номер";
-			this.Column1.MinimumWidth = 6;
-			this.Column1.Name = "Column1";
-			this.Column1.Width = 125;
-			// 
-			// Column2
-			// 
-			this.Column2.HeaderText = "Паспортные данные";
-			this.Column2.MinimumWidth = 6;
-			this.Column2.Name = "Column2";
-			this.Column2.Width = 125;
-			// 
-			// Column3
-			// 
-			this.Column3.HeaderText = "Дата выдачи";
-			this.Column3.MinimumWidth = 6;
-			this.Column3.Name = "Column3";
-			this.Column3.Width = 125;
-			// 
-			// Column4
-			// 
-			this.Column4.HeaderText = "Дата возврата";
-			this.Column4.MinimumWidth = 6;
-			this.Column4.Name = "Column4";
-			this.Column4.Width = 125;
-			// 
-			// _btnAddToBD
-			// 
-			this._btnAddToBD.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
-			this._btnAddToBD.Location = new System.Drawing.Point(17, 292);
-			this._btnAddToBD.Name = "_btnAddToBD";
-			this._btnAddToBD.Size = new System.Drawing.Size(424, 51);
-			this._btnAddToBD.TabIndex = 31;
-			this._btnAddToBD.Text = "Добавить в базу данных";
-			this._btnAddToBD.UseVisualStyleBackColor = true;
-			this._btnAddToBD.Click += new System.EventHandler(this._btnAddToBD_Click);
 			// 
 			// _txtDataReturn
 			// 
@@ -254,41 +212,9 @@ namespace DataBase
 			this.label1.TabIndex = 21;
 			this.label1.Text = "Регистрационный номер:";
 			// 
-			// _btnReadFromDB
-			// 
-			this._btnReadFromDB.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
-			this._btnReadFromDB.Location = new System.Drawing.Point(17, 366);
-			this._btnReadFromDB.Name = "_btnReadFromDB";
-			this._btnReadFromDB.Size = new System.Drawing.Size(424, 48);
-			this._btnReadFromDB.TabIndex = 32;
-			this._btnReadFromDB.Text = "Считать из базы данных";
-			this._btnReadFromDB.UseVisualStyleBackColor = true;
-			this._btnReadFromDB.Click += new System.EventHandler(this._btnReadFromDB_Click);
-			// 
-			// _btnView
-			// 
-			this._btnView.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
-			this._btnView.Location = new System.Drawing.Point(1027, 375);
-			this._btnView.Name = "_btnView";
-			this._btnView.Size = new System.Drawing.Size(226, 39);
-			this._btnView.TabIndex = 34;
-			this._btnView.Text = "Режим просмотра";
-			this._btnView.UseVisualStyleBackColor = true;
-			this._btnView.Click += new System.EventHandler(this._btnView_Click);
-			// 
-			// _btnRedactor
-			// 
-			this._btnRedactor.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
-			this._btnRedactor.Location = new System.Drawing.Point(519, 375);
-			this._btnRedactor.Name = "_btnRedactor";
-			this._btnRedactor.Size = new System.Drawing.Size(258, 39);
-			this._btnRedactor.TabIndex = 33;
-			this._btnRedactor.Text = "Режим редактирования";
-			this._btnRedactor.UseVisualStyleBackColor = true;
-			this._btnRedactor.Click += new System.EventHandler(this._btnRedactor_Click);
-			// 
 			// dataGridView2
 			// 
+			this.dataGridView2.AllowUserToAddRows = false;
 			this.dataGridView2.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
 			this.dataGridView2.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.Column5,
@@ -297,7 +223,7 @@ namespace DataBase
             this.Column8,
             this.Column9,
             this.Column10});
-			this.dataGridView2.Location = new System.Drawing.Point(17, 510);
+			this.dataGridView2.Location = new System.Drawing.Point(17, 453);
 			this.dataGridView2.Name = "dataGridView2";
 			this.dataGridView2.RowHeadersWidth = 51;
 			this.dataGridView2.RowTemplate.Height = 24;
@@ -309,6 +235,7 @@ namespace DataBase
 			this.Column5.HeaderText = "ФИО";
 			this.Column5.MinimumWidth = 6;
 			this.Column5.Name = "Column5";
+			this.Column5.ReadOnly = true;
 			this.Column5.Width = 125;
 			// 
 			// Column6
@@ -316,6 +243,7 @@ namespace DataBase
 			this.Column6.HeaderText = "Паспортные данные";
 			this.Column6.MinimumWidth = 6;
 			this.Column6.Name = "Column6";
+			this.Column6.ReadOnly = true;
 			this.Column6.Width = 125;
 			// 
 			// Column7
@@ -323,6 +251,7 @@ namespace DataBase
 			this.Column7.HeaderText = "Регистрационный номер книги";
 			this.Column7.MinimumWidth = 6;
 			this.Column7.Name = "Column7";
+			this.Column7.ReadOnly = true;
 			this.Column7.Width = 125;
 			// 
 			// Column8
@@ -330,6 +259,7 @@ namespace DataBase
 			this.Column8.HeaderText = "Дата выдачи";
 			this.Column8.MinimumWidth = 6;
 			this.Column8.Name = "Column8";
+			this.Column8.ReadOnly = true;
 			this.Column8.Width = 125;
 			// 
 			// Column9
@@ -337,6 +267,7 @@ namespace DataBase
 			this.Column9.HeaderText = "Дата возврата";
 			this.Column9.MinimumWidth = 6;
 			this.Column9.Name = "Column9";
+			this.Column9.ReadOnly = true;
 			this.Column9.Width = 125;
 			// 
 			// Column10
@@ -344,13 +275,14 @@ namespace DataBase
 			this.Column10.HeaderText = "Количество взятых книг";
 			this.Column10.MinimumWidth = 6;
 			this.Column10.Name = "Column10";
+			this.Column10.ReadOnly = true;
 			this.Column10.Width = 125;
 			// 
 			// label5
 			// 
 			this.label5.AutoSize = true;
 			this.label5.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
-			this.label5.Location = new System.Drawing.Point(16, 464);
+			this.label5.Location = new System.Drawing.Point(16, 407);
 			this.label5.Name = "label5";
 			this.label5.Size = new System.Drawing.Size(425, 20);
 			this.label5.TabIndex = 36;
@@ -359,7 +291,7 @@ namespace DataBase
 			// textBox1
 			// 
 			this.textBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
-			this.textBox1.Location = new System.Drawing.Point(457, 461);
+			this.textBox1.Location = new System.Drawing.Point(457, 404);
 			this.textBox1.Name = "textBox1";
 			this.textBox1.Size = new System.Drawing.Size(34, 26);
 			this.textBox1.TabIndex = 37;
@@ -370,7 +302,7 @@ namespace DataBase
 			// 
 			this.label6.AutoSize = true;
 			this.label6.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
-			this.label6.Location = new System.Drawing.Point(497, 464);
+			this.label6.Location = new System.Drawing.Point(497, 407);
 			this.label6.Name = "label6";
 			this.label6.Size = new System.Drawing.Size(119, 20);
 			this.label6.TabIndex = 38;
@@ -379,7 +311,7 @@ namespace DataBase
 			// button1
 			// 
 			this.button1.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
-			this.button1.Location = new System.Drawing.Point(622, 453);
+			this.button1.Location = new System.Drawing.Point(622, 396);
 			this.button1.Name = "button1";
 			this.button1.Size = new System.Drawing.Size(177, 42);
 			this.button1.TabIndex = 39;
@@ -391,7 +323,7 @@ namespace DataBase
 			// 
 			this.label7.AutoSize = true;
 			this.label7.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
-			this.label7.Location = new System.Drawing.Point(959, 506);
+			this.label7.Location = new System.Drawing.Point(959, 449);
 			this.label7.Name = "label7";
 			this.label7.Size = new System.Drawing.Size(322, 20);
 			this.label7.TabIndex = 40;
@@ -400,16 +332,17 @@ namespace DataBase
 			// _txtInputE2
 			// 
 			this._txtInputE2.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
-			this._txtInputE2.Location = new System.Drawing.Point(1300, 503);
+			this._txtInputE2.Location = new System.Drawing.Point(1300, 446);
 			this._txtInputE2.Name = "_txtInputE2";
-			this._txtInputE2.Size = new System.Drawing.Size(201, 26);
+			this._txtInputE2.Size = new System.Drawing.Size(188, 26);
 			this._txtInputE2.TabIndex = 41;
+			this._txtInputE2.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
 			this._txtInputE2.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this._txtInputE2_KeyPress);
 			// 
 			// _btnExecute2
 			// 
 			this._btnExecute2.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
-			this._btnExecute2.Location = new System.Drawing.Point(963, 543);
+			this._btnExecute2.Location = new System.Drawing.Point(963, 486);
 			this._btnExecute2.Name = "_btnExecute2";
 			this._btnExecute2.Size = new System.Drawing.Size(308, 41);
 			this._btnExecute2.TabIndex = 42;
@@ -419,17 +352,51 @@ namespace DataBase
 			// 
 			// richTextBox1
 			// 
-			this.richTextBox1.Location = new System.Drawing.Point(963, 606);
+			this.richTextBox1.Location = new System.Drawing.Point(963, 549);
 			this.richTextBox1.Name = "richTextBox1";
 			this.richTextBox1.Size = new System.Drawing.Size(525, 176);
 			this.richTextBox1.TabIndex = 43;
 			this.richTextBox1.Text = "";
 			// 
+			// Column1
+			// 
+			this.Column1.HeaderText = "Регистрационный номер";
+			this.Column1.MinimumWidth = 6;
+			this.Column1.Name = "Column1";
+			this.Column1.ReadOnly = true;
+			this.Column1.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
+			this.Column1.Width = 125;
+			// 
+			// Column2
+			// 
+			this.Column2.HeaderText = "Паспортные данные";
+			this.Column2.MinimumWidth = 6;
+			this.Column2.Name = "Column2";
+			this.Column2.ReadOnly = true;
+			this.Column2.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
+			this.Column2.Width = 125;
+			// 
+			// Column3
+			// 
+			this.Column3.HeaderText = "Дата выдачи";
+			this.Column3.MinimumWidth = 6;
+			this.Column3.Name = "Column3";
+			this.Column3.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
+			this.Column3.Width = 125;
+			// 
+			// Column4
+			// 
+			this.Column4.HeaderText = "Дата возврата";
+			this.Column4.MinimumWidth = 6;
+			this.Column4.Name = "Column4";
+			this.Column4.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
+			this.Column4.Width = 125;
+			// 
 			// Register
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(1501, 847);
+			this.ClientSize = new System.Drawing.Size(1501, 763);
 			this.Controls.Add(this.richTextBox1);
 			this.Controls.Add(this._btnExecute2);
 			this.Controls.Add(this._txtInputE2);
@@ -439,10 +406,6 @@ namespace DataBase
 			this.Controls.Add(this.textBox1);
 			this.Controls.Add(this.label5);
 			this.Controls.Add(this.dataGridView2);
-			this.Controls.Add(this._btnView);
-			this.Controls.Add(this._btnRedactor);
-			this.Controls.Add(this._btnReadFromDB);
-			this.Controls.Add(this._btnAddToBD);
 			this.Controls.Add(this._txtDataReturn);
 			this.Controls.Add(this.label4);
 			this.Controls.Add(this._btnDelete);
@@ -473,11 +436,6 @@ namespace DataBase
 		private System.Windows.Forms.ToolStripMenuItem readerToolStripMenuItem;
 		private System.Windows.Forms.ToolStripMenuItem bookToolStripMenuItem;
 		private System.Windows.Forms.DataGridView dataGridView1;
-		private System.Windows.Forms.DataGridViewTextBoxColumn Column1;
-		private System.Windows.Forms.DataGridViewTextBoxColumn Column2;
-		private System.Windows.Forms.DataGridViewTextBoxColumn Column3;
-		private System.Windows.Forms.DataGridViewTextBoxColumn Column4;
-		private System.Windows.Forms.Button _btnAddToBD;
 		private System.Windows.Forms.TextBox _txtDataReturn;
 		private System.Windows.Forms.Label label4;
 		private System.Windows.Forms.Button _btnDelete;
@@ -488,16 +446,7 @@ namespace DataBase
 		private System.Windows.Forms.Label label3;
 		private System.Windows.Forms.Label label2;
 		private System.Windows.Forms.Label label1;
-		private System.Windows.Forms.Button _btnReadFromDB;
-		private System.Windows.Forms.Button _btnView;
-		private System.Windows.Forms.Button _btnRedactor;
 		private System.Windows.Forms.DataGridView dataGridView2;
-		private System.Windows.Forms.DataGridViewTextBoxColumn Column5;
-		private System.Windows.Forms.DataGridViewTextBoxColumn Column6;
-		private System.Windows.Forms.DataGridViewTextBoxColumn Column7;
-		private System.Windows.Forms.DataGridViewTextBoxColumn Column8;
-		private System.Windows.Forms.DataGridViewTextBoxColumn Column9;
-		private System.Windows.Forms.DataGridViewTextBoxColumn Column10;
 		private System.Windows.Forms.Label label5;
 		private System.Windows.Forms.TextBox textBox1;
 		private System.Windows.Forms.Label label6;
@@ -506,5 +455,15 @@ namespace DataBase
 		private System.Windows.Forms.TextBox _txtInputE2;
 		private System.Windows.Forms.Button _btnExecute2;
 		private System.Windows.Forms.RichTextBox richTextBox1;
+		private System.Windows.Forms.DataGridViewTextBoxColumn Column5;
+		private System.Windows.Forms.DataGridViewTextBoxColumn Column6;
+		private System.Windows.Forms.DataGridViewTextBoxColumn Column7;
+		private System.Windows.Forms.DataGridViewTextBoxColumn Column8;
+		private System.Windows.Forms.DataGridViewTextBoxColumn Column9;
+		private System.Windows.Forms.DataGridViewTextBoxColumn Column10;
+		private System.Windows.Forms.DataGridViewTextBoxColumn Column1;
+		private System.Windows.Forms.DataGridViewTextBoxColumn Column2;
+		private System.Windows.Forms.DataGridViewTextBoxColumn Column3;
+		private System.Windows.Forms.DataGridViewTextBoxColumn Column4;
 	}
 }
